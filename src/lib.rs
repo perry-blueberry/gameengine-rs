@@ -17,7 +17,7 @@ struct State {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: Window,
-    render_pipeline: wgpu::RenderPipeline,
+    render_pipeline: (usize, Vec<wgpu::RenderPipeline>),
 }
 
 impl State {
@@ -128,6 +128,40 @@ impl State {
             }),
             multiview: None,
         });
+        let render_pipeline2 = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render pipeline"),
+            layout: Some(&render_pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                polygon_mode: wgpu::PolygonMode::Fill,
+                unclipped_depth: false,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main2",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: config.format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: ColorWrites::all(),
+                })],
+            }),
+            multiview: None,
+        });
         Self {
             window,
             surface,
@@ -135,7 +169,7 @@ impl State {
             queue,
             config,
             size,
-            render_pipeline,
+            render_pipeline: (0, vec![render_pipeline, render_pipeline2]),
         }
     }
 
@@ -154,7 +188,29 @@ impl State {
 
     #[allow(unused_variables)]
     fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        match event {
+            WindowEvent::KeyboardInput {
+                input:
+                    KeyboardInput {
+                        state: ElementState::Pressed,
+                        virtual_keycode: Some(VirtualKeyCode::Space),
+                        ..
+                    },
+                ..
+            } => {
+                self.render_pipeline.0 = (self.render_pipeline.0 + 1) % 2;
+                true
+            }
+            _ => false,
+        }
+        // if let WindowEvent::KeyboardInput { input, .. } = event {
+        //     if let Some(keycode) = input.virtual_keycode {
+        //         if keycode == VirtualKeyCode::Space && input.state == ElementState::Pressed {
+        //             self.render_pipeline.0 = (self.render_pipeline.0 + 1) % 2;
+        //         }
+        //     }
+        // }
+        // false
     }
 
     fn update(&mut self) {}
@@ -189,7 +245,7 @@ impl State {
                 })],
                 depth_stencil_attachment: None,
             });
-            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_pipeline(&self.render_pipeline.1[self.render_pipeline.0]);
             render_pass.draw(0..3, 0..1);
         }
 
