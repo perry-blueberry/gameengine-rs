@@ -1,11 +1,14 @@
 use std::iter;
 
+use bytemuck::{cast_slice, Pod, Zeroable};
+use camera_controller::CameraController;
+use cgmath::{perspective, Deg, Matrix4, Point3, SquareMatrix, Vector3};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     vertex_attr_array, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingResource, BindingType, BufferAddress, BufferUsages, ColorWrites,
-    IndexFormat, MultisampleState, SamplerBindingType, ShaderStages, TextureSampleType,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout,
+    BindGroupLayoutEntry, BindingResource, BindingType, BufferAddress, BufferBindingType,
+    BufferUsages, ColorWrites, IndexFormat, MultisampleState, SamplerBindingType, ShaderStages,
+    TextureSampleType, TextureViewDimension, VertexAttribute, VertexBufferLayout,
 };
 use winit::{
     event::*,
@@ -16,6 +19,7 @@ use winit::{
 // lib.rs
 use winit::window::Window;
 
+mod camera_controller;
 mod texture;
 
 #[repr(C)]
@@ -62,6 +66,51 @@ const VERTICES: &[Vertex] = &[
 
 const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
+#[rustfmt::skip]
+pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.0, 0.0, 0.5, 1.0,
+);
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Pod, Zeroable)]
+struct CameraUniform {
+    view_proj: [[f32; 4]; 4],
+}
+
+impl CameraUniform {
+    fn new() -> Self {
+        // SquareMatrix
+        Self {
+            view_proj: Matrix4::identity().into(),
+        }
+    }
+
+    fn update_view_proj(&mut self, camera: &Camera) {
+        self.view_proj = camera.build_view_projection_matrix().into();
+    }
+}
+
+struct Camera {
+    eye: Point3<f32>,
+    target: Point3<f32>,
+    up: Vector3<f32>,
+    aspect: f32,
+    fovy: f32,
+    znear: f32,
+    zfar: f32,
+}
+
+impl Camera {
+    fn build_view_projection_matrix(&self) -> Matrix4<f32> {
+        let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
+        let proj = perspective(Deg(self.fovy), self.aspect, self.znear, self.zfar);
+        OPENGL_TO_WGPU_MATRIX * proj * view
+    }
+}
+
 struct State {
     surface: wgpu::Surface,
     device: wgpu::Device,
@@ -75,6 +124,11 @@ struct State {
     num_indices: u32,
     diffuse_bind_group: BindGroup,
     diffuse_texture: texture::Texture,
+    camera: Camera,
+    camera_uniform: CameraUniform,
+    camera_buffer: wgpu::Buffer,
+    camera_bind_group: BindGroup,
+    camera_controller: CameraController,
 }
 
 impl State {
@@ -185,11 +239,55 @@ impl State {
             ],
         });
 
+        let camera = Camera {
+            aspect: config.width as f32 / config.height as f32,
+            eye: (0.0, 1.0, 2.0).into(),
+            target: (0.0, 0.0, 0.0).into(),
+            fovy: 45.0,
+            znear: 0.1,
+            zfar: 100.0,
+            up: Vector3::unit_y(),
+        };
+
+        let camera_controller = CameraController::new(0.02);
+
+        let mut camera_uniform = CameraUniform::new();
+        camera_uniform.update_view_proj(&camera);
+
+        let camera_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: cast_slice(&[camera_uniform]),
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+        });
+
+        let camera_bind_group_layout =
+            device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+                label: Some("camera_bind_group_layout"),
+                entries: &[BindGroupLayoutEntry {
+                    binding: 0,
+                    count: None,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    visibility: ShaderStages::VERTEX,
+                }],
+            });
+        let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
+            label: Some("camera_bind_group"),
+            layout: &camera_bind_group_layout,
+            entries: &[BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
+        });
+
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render pipeline layout"),
-                bind_group_layouts: &[&texture_bind_group_layout],
+                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
                 push_constant_ranges: &[],
             });
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -252,6 +350,11 @@ impl State {
             num_indices,
             diffuse_bind_group,
             diffuse_texture,
+            camera,
+            camera_uniform,
+            camera_buffer,
+            camera_bind_group,
+            camera_controller,
         }
     }
 
@@ -270,10 +373,15 @@ impl State {
 
     #[allow(unused_variables)]
     fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        self.camera_controller.process_events(event)
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        self.camera_controller.update_camera(&mut self.camera);
+        self.camera_uniform.update_view_proj(&self.camera);
+        self.queue
+            .write_buffer(&self.camera_buffer, 0, cast_slice(&[self.camera_uniform]));
+    }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -307,6 +415,7 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
