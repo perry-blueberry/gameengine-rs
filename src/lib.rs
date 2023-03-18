@@ -10,9 +10,10 @@ use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     vertex_attr_array, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingResource, BindingType, BufferAddress, BufferBindingType,
-    BufferUsages, ColorWrites, IndexFormat, MultisampleState, SamplerBindingType, ShaderStages,
-    TextureSampleType, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
-    VertexStepMode,
+    BufferUsages, ColorWrites, CompareFunction, DepthBiasState, DepthStencilState, IndexFormat,
+    LoadOp, MultisampleState, Operations, RenderPassDepthStencilAttachment, SamplerBindingType,
+    ShaderStages, StencilState, TextureSampleType, TextureViewDimension, VertexAttribute,
+    VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use winit::{
     event::*,
@@ -185,6 +186,7 @@ struct State {
     num_indices: u32,
     diffuse_bind_group: BindGroup,
     diffuse_texture: texture::Texture,
+    depth_texture: texture::Texture,
     camera: Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -302,6 +304,9 @@ impl State {
             ],
         });
 
+        let depth_texture =
+            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+
         let camera = Camera {
             aspect: config.width as f32 / config.height as f32,
             eye: (0.0, 1.0, 2.0).into(),
@@ -397,7 +402,13 @@ impl State {
                 unclipped_depth: false,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Less,
+                stencil: StencilState::default(),
+                bias: DepthBiasState::default(),
+            }),
             multisample: MultisampleState {
                 count: 1,
                 mask: !0,
@@ -440,6 +451,7 @@ impl State {
             num_indices,
             diffuse_bind_group,
             diffuse_texture,
+            depth_texture,
             camera,
             camera_uniform,
             camera_buffer,
@@ -461,6 +473,8 @@ impl State {
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
         }
+        self.depth_texture =
+            texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
     }
 
     #[allow(unused_variables)]
@@ -503,7 +517,14 @@ impl State {
                         store: true,
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture.view,
+                    depth_ops: Some(Operations {
+                        load: LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
