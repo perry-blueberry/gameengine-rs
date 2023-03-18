@@ -190,8 +190,9 @@ struct State {
     camera_buffer: wgpu::Buffer,
     camera_bind_group: BindGroup,
     camera_controller: CameraController,
-    instances: Vec<Instance>,
+    num_instances: usize,
     instance_buffer: wgpu::Buffer,
+    instance_displacement: Vector3<f32>,
 }
 
 impl State {
@@ -346,31 +347,12 @@ impl State {
             }],
         });
 
-        let instances = (0..NUM_INSTANCES_PER_ROW)
-            .flat_map(|z| {
-                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                    let position = Vector3 {
-                        x: x as f32,
-                        y: 0.0,
-                        z: z as f32,
-                    } - INSTANCE_DISPLACEMENT;
+        let instance_data = generate_instances(NUM_INSTANCES_PER_ROW, INSTANCE_DISPLACEMENT);
 
-                    let rotation = if position.is_zero() {
-                        Quaternion::from_axis_angle(Vector3::unit_z(), Deg(0.0))
-                    } else {
-                        Quaternion::from_axis_angle(position.normalize(), Deg(45.0))
-                    };
-
-                    Instance { position, rotation }
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("instance_buffer"),
             contents: cast_slice(&instance_data),
-            usage: BufferUsages::VERTEX,
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
@@ -445,8 +427,9 @@ impl State {
             camera_buffer,
             camera_bind_group,
             camera_controller,
-            instances,
+            num_instances: instance_data.len(),
             instance_buffer,
+            instance_displacement: INSTANCE_DISPLACEMENT,
         }
     }
 
@@ -473,6 +456,15 @@ impl State {
         self.camera_uniform.update_view_proj(&self.camera);
         self.queue
             .write_buffer(&self.camera_buffer, 0, cast_slice(&[self.camera_uniform]));
+        self.instance_displacement -= Vector3::new(0.0001, 0.0, 0.0);
+        self.queue.write_buffer(
+            &self.instance_buffer,
+            0,
+            cast_slice(&generate_instances(
+                NUM_INSTANCES_PER_ROW,
+                self.instance_displacement,
+            )),
+        );
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -511,7 +503,7 @@ impl State {
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.num_instances as _);
         }
 
         self.queue.submit(iter::once(encoder.finish()));
@@ -579,4 +571,33 @@ pub async fn run() {
             _ => {}
         }
     });
+}
+
+fn generate_instances(
+    num_instances_per_row: u32,
+    instance_displacement: Vector3<f32>,
+) -> Vec<InstanceRaw> {
+    let instances = (0..num_instances_per_row)
+        .flat_map(|z| {
+            (0..num_instances_per_row).map(move |x| {
+                let position = Vector3 {
+                    x: x as f32,
+                    y: 0.0,
+                    z: z as f32,
+                } - instance_displacement;
+
+                let rotation = if position.is_zero() {
+                    Quaternion::from_axis_angle(Vector3::unit_z(), Deg(0.0))
+                } else {
+                    Quaternion::from_axis_angle(position.normalize(), Deg(45.0))
+                };
+
+                Instance { position, rotation }
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let instance_data = instances.iter().map(|i| i.to_raw()).collect::<Vec<_>>();
+
+    instance_data
 }
