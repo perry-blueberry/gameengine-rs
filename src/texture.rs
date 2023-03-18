@@ -82,6 +82,7 @@ impl Texture {
         device: &Device,
         config: &SurfaceConfiguration,
         label: &str,
+        compare_function: Option<CompareFunction>,
     ) -> Self {
         let size = Extent3d {
             depth_or_array_layers: 1,
@@ -105,12 +106,12 @@ impl Texture {
             address_mode_u: AddressMode::ClampToEdge,
             address_mode_v: AddressMode::ClampToEdge,
             address_mode_w: AddressMode::ClampToEdge,
-            mag_filter: FilterMode::Linear,
-            min_filter: FilterMode::Linear,
+            mag_filter: FilterMode::Nearest, // Linear can for some reason not be used without filters? (sampler binding 1 expects filtering = false, but given a sampler with filtering = true)
+            min_filter: FilterMode::Nearest,
             mipmap_filter: FilterMode::Nearest,
             lod_min_clamp: 0.0,
             lod_max_clamp: 100.0,
-            compare: Some(CompareFunction::LessEqual),
+            compare: compare_function,
             ..Default::default()
         });
 
@@ -119,5 +120,13 @@ impl Texture {
             view,
             sampler,
         }
+    }
+
+    pub fn create_depth_texture_non_comparison_sampler(
+        device: &Device,
+        config: &SurfaceConfiguration,
+        label: &str,
+    ) -> Self {
+        Self::create_depth_texture(device, config, label, None)
     }
 }

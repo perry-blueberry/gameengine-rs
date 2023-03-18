@@ -6,6 +6,7 @@ use cgmath::{
     perspective, Deg, InnerSpace, Matrix4, Point3, Quaternion, Rotation3, SquareMatrix, Vector3,
     Zero,
 };
+use depth_pass::DepthPass;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     vertex_attr_array, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
@@ -25,6 +26,7 @@ use winit::{
 use winit::window::Window;
 
 mod camera_controller;
+mod depth_pass;
 mod texture;
 
 #[repr(C)]
@@ -181,6 +183,7 @@ struct State {
     size: winit::dpi::PhysicalSize<u32>,
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
+    depth_pass: DepthPass,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -304,8 +307,12 @@ impl State {
             ],
         });
 
-        let depth_texture =
-            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture = texture::Texture::create_depth_texture(
+            &device,
+            &config,
+            "depth_texture",
+            Some(CompareFunction::LessEqual),
+        );
 
         let camera = Camera {
             aspect: config.width as f32 / config.height as f32,
@@ -407,7 +414,11 @@ impl State {
                 depth_write_enabled: true,
                 depth_compare: CompareFunction::Less,
                 stencil: StencilState::default(),
-                bias: DepthBiasState::default(),
+                bias: DepthBiasState {
+                    constant: 2,
+                    slope_scale: 2.0,
+                    clamp: 0.0,
+                },
             }),
             multisample: MultisampleState {
                 count: 1,
@@ -425,6 +436,8 @@ impl State {
             }),
             multiview: None,
         });
+
+        let depth_pass = DepthPass::new(&device, &config);
 
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Vertex Buffer"),
@@ -446,6 +459,7 @@ impl State {
             config,
             size,
             render_pipeline,
+            depth_pass,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -473,8 +487,13 @@ impl State {
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
         }
-        self.depth_texture =
-            texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+        self.depth_texture = texture::Texture::create_depth_texture(
+            &self.device,
+            &self.config,
+            "depth_texture",
+            Some(CompareFunction::LessEqual),
+        );
+        self.depth_pass.resize(&self.device, &self.config);
     }
 
     #[allow(unused_variables)]
@@ -518,7 +537,7 @@ impl State {
                     },
                 })],
                 depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture.view,
+                    view: &self.depth_pass.texture.view,
                     depth_ops: Some(Operations {
                         load: LoadOp::Clear(1.0),
                         store: true,
@@ -534,6 +553,8 @@ impl State {
             render_pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
         }
+
+        self.depth_pass.render(&view, &mut encoder);
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();
@@ -555,7 +576,6 @@ pub async fn run() {
                 window_id,
             } if window_id == state.window().id() => {
                 if !state.input(event) {
-                    // UPDATED!
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
