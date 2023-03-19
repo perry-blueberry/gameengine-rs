@@ -1,9 +1,11 @@
 use anyhow::*;
 use image::{DynamicImage, GenericImageView};
 use wgpu::{
-    AddressMode, CompareFunction, Device, Extent3d, FilterMode, ImageCopyTexture, ImageDataLayout,
-    Origin3d, Queue, Sampler, SamplerDescriptor, SurfaceConfiguration, TextureDescriptor,
-    TextureDimension, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
+    AddressMode, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType,
+    CompareFunction, Device, Extent3d, FilterMode, ImageCopyTexture, ImageDataLayout, Origin3d,
+    Queue, Sampler, SamplerBindingType, SamplerDescriptor, ShaderStages, SurfaceConfiguration,
+    TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
+    TextureView, TextureViewDescriptor, TextureViewDimension,
 };
 
 pub struct Texture {
@@ -120,4 +122,28 @@ impl Texture {
             sampler,
         }
     }
+}
+
+pub fn create_texture_bind_group_layout(device: &Device) -> BindGroupLayout {
+    device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("texture_bind_group_layout"),
+        entries: &[
+            BindGroupLayoutEntry {
+                binding: 0,
+                count: None,
+                ty: BindingType::Texture {
+                    sample_type: TextureSampleType::Float { filterable: true },
+                    view_dimension: TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                visibility: ShaderStages::FRAGMENT,
+            },
+            BindGroupLayoutEntry {
+                binding: 1,
+                count: None,
+                ty: BindingType::Sampler(SamplerBindingType::Filtering),
+                visibility: ShaderStages::FRAGMENT,
+            },
+        ],
+    })
 }
