@@ -45,10 +45,27 @@ pub async fn load_model(
     queue: &Queue,
     layout: &BindGroupLayout,
 ) -> Result<model::Model> {
-    let obj_text = load_string(file_name).await?;
-    let obj_cursor = Cursor::new(obj_text);
-    let mut obj_reader = BufReader::new(obj_cursor);
+    let text = load_string(file_name).await?;
+    let cursor = Cursor::new(text);
+    let reader = BufReader::new(cursor);
+    match file_name
+        .split(".")
+        .last()
+        .expect(&format!("Unknown file type {}", file_name))
+    {
+        "obj" => load_obj_model(file_name, device, queue, layout, reader).await,
+        "gltf" => todo!(),
+        _ => panic!("Unable to parse format {}", file_name),
+    }
+}
 
+async fn load_obj_model(
+    file_name: &str,
+    device: &Device,
+    queue: &Queue,
+    layout: &BindGroupLayout,
+    mut obj_reader: BufReader<Cursor<String>>,
+) -> Result<model::Model> {
     let (models, obj_materials) = tobj::load_obj_buf_async(
         &mut obj_reader,
         &tobj::LoadOptions {
