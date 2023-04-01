@@ -8,16 +8,16 @@ use num_traits::Float;
 
 use crate::math::AddScaledVector;
 
-pub struct Particle<F: Float + AddAssign + MulAssign + SubAssign + DivAssign + RemAssign + Debug> {
-    pub(crate) position: Vector3<F>,
-    pub(crate) velocity: Vector3<F>,
-    pub(crate) force_accum: Vector3<F>,
-    pub(crate) acceleration: Vector3<F>,
+pub struct Particle {
+    pub(crate) position: Vector3<f32>,
+    pub(crate) velocity: Vector3<f32>,
+    pub(crate) force_accum: Vector3<f32>,
+    pub(crate) acceleration: Vector3<f32>,
     pub(crate) damping: F,
     pub(crate) inverse_mass: F,
 }
 
-impl<F: Float + AddAssign + MulAssign + SubAssign + DivAssign + RemAssign + Debug> Particle<F> {
+impl Particle {
     pub fn integrate(&mut self, delta: F) {
         assert!(delta > F::zero());
 

@@ -141,6 +141,8 @@ async fn load_obj_model(
                 index_buffer,
                 num_elements: m.mesh.indices.len() as u32,
                 material: m.mesh.material_id.unwrap_or(0),
+                model_vertices: vertices,
+                positions: todo!(),
             }
         })
         .collect::<Vec<_>>();

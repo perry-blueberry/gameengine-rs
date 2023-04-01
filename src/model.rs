@@ -1,6 +1,7 @@
 use std::{mem::size_of, ops::Range};
 
 use bytemuck::{Pod, Zeroable};
+use cgmath::Vector3;
 use wgpu::{
     BindGroup, BufferAddress, IndexFormat, RenderPass, VertexAttribute, VertexBufferLayout,
     VertexFormat, VertexStepMode,
@@ -53,6 +54,8 @@ pub struct Mesh {
     pub index_buffer: wgpu::Buffer,
     pub num_elements: u32,
     pub material: usize,
+    pub model_vertices: Vec<ModelVertex>,
+    pub positions: Vector3<f32>,
 }
 
 pub struct Material {
