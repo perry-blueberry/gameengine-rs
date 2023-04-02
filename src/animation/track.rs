@@ -1,7 +1,4 @@
-use std::{
-    marker::PhantomData,
-    ops::{Add, Mul},
-};
+use std::ops::{Add, Mul};
 
 use cgmath::{Quaternion, Vector3};
 
@@ -19,7 +16,6 @@ pub(crate) type QuatTrack = Track<Quaternion<f32>>;
 pub(crate) struct Track<T: ArrayType> {
     frames: Vec<Frame<T>>,
     interp: Interpolation,
-    _phantom: PhantomData<T>,
 }
 
 impl<T> Track<T>
@@ -36,7 +32,6 @@ where
         Self {
             frames: vec![],
             interp: Interpolation::Linear,
-            _phantom: PhantomData,
         }
     }
 
