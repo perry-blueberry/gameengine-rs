@@ -1,10 +1,10 @@
 use cgmath::{Quaternion, Vector3};
 
-pub trait AddScaledVector<f32> {
+pub trait AddScaledVector {
     fn add_scaled_vector(&mut self, vector: &Vector3<f32>, scale: f32);
 }
 
-impl AddScaledVector<f32> for Vector3<f32> {
+impl AddScaledVector for Vector3<f32> {
     fn add_scaled_vector(&mut self, vector: &Vector3<f32>, scale: f32) {
         self.x += vector.x * scale;
         self.y += vector.y * scale;

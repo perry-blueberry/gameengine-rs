@@ -1,8 +1,3 @@
-use std::{
-    fmt::Debug,
-    ops::{AddAssign, DivAssign, MulAssign, RemAssign, SubAssign},
-};
-
 use cgmath::Vector3;
 
 use crate::model;
