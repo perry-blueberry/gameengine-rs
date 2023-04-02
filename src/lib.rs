@@ -7,9 +7,12 @@ use winit::{
     window::WindowBuilder,
 };
 
+mod animation;
 mod camera;
 mod camera_controller;
+mod collisions;
 mod instance;
+mod math;
 mod model;
 mod resources;
 mod state;
