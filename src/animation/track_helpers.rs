@@ -9,11 +9,11 @@ pub(crate) trait Neighborhood {
 }
 
 impl Neighborhood for f32 {
-    fn neighborhood(&self, other: &mut Self) {}
+    fn neighborhood(&self, _other: &mut Self) {}
 }
 
 impl Neighborhood for Vector3<f32> {
-    fn neighborhood(&self, other: &mut Self) {}
+    fn neighborhood(&self, _other: &mut Self) {}
 }
 
 impl Neighborhood for Quaternion<f32> {

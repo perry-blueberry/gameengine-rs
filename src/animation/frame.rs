@@ -1,11 +1,15 @@
+use cgmath::{Quaternion, Vector3};
+
+use super::array_type::ArrayType;
+
 /// Used to store keyframes in a Track
-pub struct Frame<const N: usize> {
-    pub(crate) value: [f32; N],
-    pub(crate) in_tangent: [f32; N],
-    pub(crate) out_tangent: [f32; N],
+pub(crate) struct Frame<A: ArrayType> {
+    pub(crate) value: A::Slice,
+    pub(crate) in_tangent: A::Slice,
+    pub(crate) out_tangent: A::Slice,
     pub(crate) time: f32,
 }
 
-type ScalarFrame = Frame<1>;
-type Vector3Frame = Frame<3>;
-type QuatFrame = Frame<4>;
+type ScalarFrame = Frame<f32>;
+type Vector3Frame = Frame<Vector3<f32>>;
+type QuatFrame = Frame<Quaternion<f32>>;

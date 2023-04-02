@@ -6,29 +6,31 @@ use std::{
 use cgmath::{Quaternion, Vector3};
 
 use super::{
+    array_type::ArrayType,
     frame::Frame,
+    interpolation::Interpolation,
     track_helpers::{AdjustHermiteResult, Neighborhood},
 };
 
-pub(crate) type ScalarTrack = Track<f32, 1>;
-pub(crate) type Vector3Track = Track<Vector3<f32>, 3>;
-pub(crate) type QuatTrack = Track<Quaternion<f32>, 4>;
+pub(crate) type ScalarTrack = Track<f32>;
+pub(crate) type Vector3Track = Track<Vector3<f32>>;
+pub(crate) type QuatTrack = Track<Quaternion<f32>>;
 
-pub enum Interpolation {
-    Constant,
-    Linear,
-    Cubic,
-}
-
-pub(crate) struct Track<T, const N: usize> {
-    frames: Vec<Frame<N>>,
+pub(crate) struct Track<T: ArrayType> {
+    frames: Vec<Frame<T>>,
     interp: Interpolation,
     _phantom: PhantomData<T>,
 }
 
-impl<T, const N: usize> Track<T, N>
+impl<T> Track<T>
 where
-    T: Neighborhood + AdjustHermiteResult + Copy + Mul<f32, Output = T> + Add<Output = T> + Default,
+    T: Neighborhood
+        + AdjustHermiteResult
+        + Copy
+        + Mul<f32, Output = T>
+        + Add<Output = T>
+        + Default
+        + ArrayType,
 {
     pub(crate) fn new() -> Self {
         Self {
@@ -64,7 +66,7 @@ where
 
     fn sample_constant(&self, t: f32, looping: bool) -> T {
         match self.frame_index(t, looping) {
-            Some(f) if f < self.frames.len() => todo!(),
+            Some(i) => T::from_slice(&self.frames[i].value),
             _ => T::default(),
         }
     }
