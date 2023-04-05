@@ -1,12 +1,12 @@
 use std::ops::{Add, Mul};
 
-use cgmath::{Quaternion, Vector3};
+use cgmath::{num_traits::clamp, Quaternion, Vector3};
 
 use super::{
     array_type::ArrayType,
     frame::Frame,
     interpolation::Interpolation,
-    track_helpers::{AdjustHermiteResult, Neighborhood},
+    track_helpers::{AdjustHermiteResult, Interpolate, Neighborhood},
 };
 
 pub(crate) type ScalarTrack = Track<f32>;
@@ -26,7 +26,8 @@ where
         + Mul<f32, Output = T>
         + Add<Output = T>
         + Default
-        + ArrayType,
+        + ArrayType
+        + Interpolate,
 {
     pub(crate) fn new() -> Self {
         Self {
@@ -59,11 +60,78 @@ where
         result.adjust_hermite_result()
     }
 
+    fn sample(&self, mut t: f32, looping: bool) -> T {
+        match self.interp {
+            Interpolation::Constant => self.sample_constant(t, looping),
+            Interpolation::Linear => self.sample_linear(t, looping),
+            Interpolation::Cubic => self.sample_cubic(t, looping),
+        }
+    }
+
     fn sample_constant(&self, t: f32, looping: bool) -> T {
         match self.frame_index(t, looping) {
             Some(i) => T::from_slice(&self.frames[i].value),
             _ => T::default(),
         }
+    }
+
+    fn sample_linear(&self, t: f32, looping: bool) -> T {
+        match self.frame_index(t, looping) {
+            Some(this_frame) => {
+                let next_frame = this_frame + 1;
+                let track_time = self.adjust_time_to_fit_track(t, looping);
+                let this_frame_time = self.frames[this_frame].time;
+                let frame_delta = self.frames[next_frame].time - this_frame_time;
+                if frame_delta <= 0.0 {
+                    return T::default();
+                }
+                let t = (track_time - this_frame_time) / frame_delta;
+                let start = T::from_slice(&self.frames[this_frame].value);
+                let end = T::from_slice(&self.frames[next_frame].value);
+                start.interpolate(&end, t)
+            }
+            None => T::default(),
+        }
+    }
+
+    fn sample_cubic(&self, t: f32, looping: bool) -> T {
+        match self.frame_index(t, looping) {
+            Some(this_frame) => {
+                let next_frame = this_frame + 1;
+                let track_time = self.adjust_time_to_fit_track(t, looping);
+                let this_frame_time = self.frames[this_frame].time;
+                let frame_delta = self.frames[next_frame].time - this_frame_time;
+                if frame_delta <= 0.0 {
+                    return T::default();
+                }
+                let t = (track_time - this_frame_time) / frame_delta;
+
+                let point1 = T::from_slice(&self.frames[this_frame].value);
+                let slope1 = T::from_slice(&self.frames[this_frame].out_tangent) * frame_delta;
+
+                let point2 = T::from_slice(&self.frames[next_frame].value);
+                let slope2 = T::from_slice(&self.frames[next_frame].in_tangent) * frame_delta;
+
+                Self::hermite(t, &point1, &slope1, &point2, &slope2)
+            }
+            None => T::default(),
+        }
+    }
+
+    pub(crate) fn interpolation(&self) -> Interpolation {
+        self.interp
+    }
+
+    pub(crate) fn set_interpolation(&mut self, interp: Interpolation) {
+        self.interp = interp;
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.frames.len()
+    }
+
+    fn frame(&self, idx: usize) -> &Frame<T> {
+        &self.frames[idx]
     }
 
     fn frame_index(&self, mut t: f32, looping: bool) -> Option<usize> {
@@ -73,14 +141,7 @@ where
         if looping {
             let start_time = self.start_time()?;
             let end_time = self.end_time()?;
-            let duration = end_time - start_time;
-
-            // Wrap the time value within the duration of the frames
-            t = (t - start_time) % duration;
-            if t <= 0.0 {
-                t += duration;
-            }
-            t = t + start_time;
+            t = self.loop_time(t, start_time, end_time);
         } else {
             // If time is before or at the first frame, return 0
             if t <= self.frames[0].time {
@@ -99,5 +160,33 @@ where
             }
         }
         None
+    }
+
+    fn adjust_time_to_fit_track(&self, mut t: f32, looping: bool) -> f32 {
+        if self.frames.is_empty() {
+            return 0.0;
+        }
+
+        let start_time = self.start_time().unwrap_or_default();
+        let end_time = self.end_time().unwrap_or_default();
+        if end_time - start_time == 0.0 {
+            return 0.0;
+        }
+        if looping {
+            t = self.loop_time(t, start_time, end_time);
+        } else {
+            t = clamp(t, start_time, end_time);
+        }
+        t
+    }
+
+    fn loop_time(&self, mut t: f32, start_time: f32, end_time: f32) -> f32 {
+        let duration = end_time - start_time;
+        // Wrap the time value within the duration of the frames
+        t = (t - start_time) % duration;
+        if t <= 0.0 {
+            t += duration;
+        }
+        t + start_time
     }
 }
