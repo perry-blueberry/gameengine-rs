@@ -25,7 +25,7 @@ where
         + Copy
         + Mul<f32, Output = T>
         + Add<Output = T>
-        + Default
+        + DefaultConstructable
         + ArrayType
         + Interpolate,
 {
@@ -60,7 +60,7 @@ where
         result.adjust_hermite_result()
     }
 
-    fn sample(&self, mut t: f32, looping: bool) -> T {
+    pub(crate) fn sample(&self, mut t: f32, looping: bool) -> T {
         match self.interp {
             Interpolation::Constant => self.sample_constant(t, looping),
             Interpolation::Linear => self.sample_linear(t, looping),
@@ -188,5 +188,34 @@ where
             t += duration;
         }
         t + start_time
+    }
+}
+
+pub(crate) trait DefaultConstructable {
+    fn default() -> Self;
+}
+
+impl DefaultConstructable for f32 {
+    fn default() -> Self {
+        Default::default()
+    }
+}
+
+impl DefaultConstructable for Vector3<f32> {
+    fn default() -> Self {
+        Self {
+            x: Default::default(),
+            y: Default::default(),
+            z: Default::default(),
+        }
+    }
+}
+
+impl DefaultConstructable for Quaternion<f32> {
+    fn default() -> Self {
+        Self {
+            v: DefaultConstructable::default(),
+            s: Default::default(),
+        }
     }
 }
