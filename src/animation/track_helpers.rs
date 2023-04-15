@@ -4,7 +4,7 @@ use cgmath::{InnerSpace, Quaternion, Vector3, VectorSpace};
 
 use crate::math::mix;
 
-pub(crate) trait Neighborhood {
+pub trait Neighborhood {
     fn neighborhood(&self, other: &mut Self);
 }
 
@@ -24,7 +24,7 @@ impl Neighborhood for Quaternion<f32> {
     }
 }
 
-pub(crate) trait AdjustHermiteResult {
+pub trait AdjustHermiteResult {
     fn adjust_hermite_result(&self) -> Self;
 }
 
@@ -46,7 +46,7 @@ impl AdjustHermiteResult for Quaternion<f32> {
     }
 }
 
-pub(crate) trait Interpolate {
+pub trait Interpolate {
     fn interpolate(&self, other: &Self, t: f32) -> Self;
 }
 

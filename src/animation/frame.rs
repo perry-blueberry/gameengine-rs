@@ -1,15 +1,36 @@
 use cgmath::{Quaternion, Vector3};
 
+use super::track::DefaultConstructable;
+
 use super::array_type::ArrayType;
 
 /// Used to store keyframes in a Track
-pub(crate) struct Frame<A: ArrayType> {
-    pub(crate) value: A::Slice,
-    pub(crate) in_tangent: A::Slice,
-    pub(crate) out_tangent: A::Slice,
-    pub(crate) time: f32,
+#[derive(Debug)]
+pub struct Frame<A: ArrayType> {
+    pub value: A::Slice,
+    pub in_tangent: A::Slice,
+    pub out_tangent: A::Slice,
+    pub time: f32,
 }
 
-type ScalarFrame = Frame<f32>;
-type Vector3Frame = Frame<Vector3<f32>>;
-type QuatFrame = Frame<Quaternion<f32>>;
+pub type ScalarFrame = Frame<f32>;
+pub type Vector3Frame = Frame<Vector3<f32>>;
+pub type QuatFrame = Frame<Quaternion<f32>>;
+
+impl<A: ArrayType> Frame<A> {
+    pub fn new_simple(time: f32, value: A) -> Frame<A>
+    where
+        A: DefaultConstructable,
+    {
+        Self::new(time, A::default(), A::default(), value)
+    }
+
+    pub fn new(time: f32, in_tangent: A, out_tangent: A, value: A) -> Frame<A> {
+        Self {
+            value: value.to_slice(),
+            in_tangent: in_tangent.to_slice(),
+            out_tangent: out_tangent.to_slice(),
+            time,
+        }
+    }
+}

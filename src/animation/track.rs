@@ -9,11 +9,12 @@ use super::{
     track_helpers::{AdjustHermiteResult, Interpolate, Neighborhood},
 };
 
-pub(crate) type ScalarTrack = Track<f32>;
-pub(crate) type Vector3Track = Track<Vector3<f32>>;
-pub(crate) type QuatTrack = Track<Quaternion<f32>>;
+pub type ScalarTrack = Track<f32>;
+pub type Vector3Track = Track<Vector3<f32>>;
+pub type QuatTrack = Track<Quaternion<f32>>;
 
-pub(crate) struct Track<T: ArrayType> {
+#[derive(Debug)]
+pub struct Track<T: ArrayType> {
     frames: Vec<Frame<T>>,
     interp: Interpolation,
 }
@@ -29,18 +30,22 @@ where
         + ArrayType
         + Interpolate,
 {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             frames: vec![],
             interp: Interpolation::Linear,
         }
     }
 
-    pub(crate) fn start_time(&self) -> Option<f32> {
+    pub fn new_with_args(interp: Interpolation, frames: Vec<Frame<T>>) -> Self {
+        Self { frames, interp }
+    }
+
+    pub fn start_time(&self) -> Option<f32> {
         Some(self.frames.first()?.time)
     }
 
-    pub(crate) fn end_time(&self) -> Option<f32> {
+    pub fn end_time(&self) -> Option<f32> {
         Some(self.frames.last()?.time)
     }
 
@@ -60,7 +65,7 @@ where
         result.adjust_hermite_result()
     }
 
-    pub(crate) fn sample(&self, mut t: f32, looping: bool) -> T {
+    pub fn sample(&self, mut t: f32, looping: bool) -> T {
         match self.interp {
             Interpolation::Constant => self.sample_constant(t, looping),
             Interpolation::Linear => self.sample_linear(t, looping),
@@ -77,7 +82,7 @@ where
 
     fn sample_linear(&self, t: f32, looping: bool) -> T {
         match self.frame_index(t, looping) {
-            Some(this_frame) => {
+            Some(this_frame) if this_frame < self.frames.len() - 1 => {
                 let next_frame = this_frame + 1;
                 let track_time = self.adjust_time_to_fit_track(t, looping);
                 let this_frame_time = self.frames[this_frame].time;
@@ -90,13 +95,13 @@ where
                 let end = T::from_slice(&self.frames[next_frame].value);
                 start.interpolate(&end, t)
             }
-            None => T::default(),
+            _ => T::default(),
         }
     }
 
     fn sample_cubic(&self, t: f32, looping: bool) -> T {
         match self.frame_index(t, looping) {
-            Some(this_frame) => {
+            Some(this_frame) if this_frame < self.frames.len() - 1 => {
                 let next_frame = this_frame + 1;
                 let track_time = self.adjust_time_to_fit_track(t, looping);
                 let this_frame_time = self.frames[this_frame].time;
@@ -114,23 +119,23 @@ where
 
                 Self::hermite(t, &point1, &slope1, &point2, &slope2)
             }
-            None => T::default(),
+            _ => T::default(),
         }
     }
 
-    pub(crate) fn interpolation(&self) -> Interpolation {
+    pub fn interpolation(&self) -> Interpolation {
         self.interp
     }
 
-    pub(crate) fn set_interpolation(&mut self, interp: Interpolation) {
+    pub fn set_interpolation(&mut self, interp: Interpolation) {
         self.interp = interp;
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.frames.len()
     }
 
-    fn frame(&self, idx: usize) -> &Frame<T> {
+    pub fn frame(&self, idx: usize) -> &Frame<T> {
         &self.frames[idx]
     }
 
@@ -169,12 +174,13 @@ where
 
         let start_time = self.start_time().unwrap_or_default();
         let end_time = self.end_time().unwrap_or_default();
-        if end_time - start_time == 0.0 {
+        if end_time - start_time <= 0.0 {
             return 0.0;
         }
         if looping {
             t = self.loop_time(t, start_time, end_time);
         } else {
+            println!("t {} start {} end {}", t, start_time, end_time);
             t = clamp(t, start_time, end_time);
         }
         t
@@ -191,7 +197,7 @@ where
     }
 }
 
-pub(crate) trait DefaultConstructable {
+pub trait DefaultConstructable {
     fn default() -> Self;
 }
 

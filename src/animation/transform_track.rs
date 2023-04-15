@@ -1,20 +1,20 @@
-use super::track::{DefaultConstructable, QuatTrack, Vector3Track};
+use super::track::{QuatTrack, Vector3Track};
 
-use cgmath::{Decomposed, Matrix4, Quaternion, Transform, Vector3, VectorSpace};
+use cgmath::{Decomposed, Quaternion, Vector3};
 
-pub(crate) struct TransformTrack {
-    pub(crate) id: u32,
+pub struct TransformTrack {
+    pub id: u32,
     position: Vector3Track,
     rotation: QuatTrack,
     scale: Vector3Track,
 }
 
 impl TransformTrack {
-    pub(crate) fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         self.position.len() > 0 || self.rotation.len() > 0 || self.scale.len() > 0
     }
 
-    pub(crate) fn start_time(&self) -> Option<f32> {
+    pub fn start_time(&self) -> Option<f32> {
         [
             self.position.start_time(),
             self.rotation.start_time(),
@@ -25,7 +25,7 @@ impl TransformTrack {
         .reduce(f32::min)
     }
 
-    pub(crate) fn end_time(&self) -> Option<f32> {
+    pub fn end_time(&self) -> Option<f32> {
         [
             self.position.end_time(),
             self.rotation.end_time(),
@@ -36,7 +36,7 @@ impl TransformTrack {
         .reduce(f32::min)
     }
 
-    pub(crate) fn sample(
+    pub fn sample(
         &self,
         ref_tf: Decomposed<Vector3<f32>, Quaternion<f32>>,
         t: f32,
