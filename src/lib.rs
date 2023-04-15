@@ -1,28 +1,27 @@
-use camera::Camera;
+use camera::CameraPerspective;
 
-use state::State;
+use rendering::state::RenderState;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
 };
 
-mod animation;
-mod camera;
+pub mod animation;
+pub mod camera;
 mod camera_controller;
 mod collisions;
 mod instance;
 mod math;
-mod model;
+pub mod model;
+pub mod rendering;
 mod resources;
-mod state;
 mod texture;
 
-pub async fn run() {
+pub fn run<S: 'static + RenderState>(event_loop: EventLoop<()>, mut state: S) {
     env_logger::init();
-    let event_loop = EventLoop::new();
+    /*     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
-    let mut state = State::new(window).await;
+    let mut state = S::new(window).await; */
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -59,7 +58,7 @@ pub async fn run() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size)
+                        state.resize(state.size())
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,

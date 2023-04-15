@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::camera::{Camera, CameraUniform};
+use crate::camera::{CameraPerspective, CameraUniform};
 use crate::camera_controller::CameraController;
 use crate::instance::{create_instances, Instance, InstanceRaw};
 use crate::model::{self, DrawModel, ModelVertex, Vertex};
@@ -8,6 +8,7 @@ use crate::texture::create_texture_bind_group_layout;
 use crate::{resources, texture};
 use bytemuck::cast_slice;
 use cgmath::Vector3;
+use wgpu::SurfaceError;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
@@ -15,20 +16,30 @@ use wgpu::{
     CompareFunction, DepthBiasState, DepthStencilState, LoadOp, MultisampleState, Operations,
     RenderPassDepthStencilAttachment, ShaderStages, StencilState,
 };
+use winit::dpi::PhysicalSize;
 use winit::event::*;
 
 use winit::window::Window;
+
+pub trait RenderState {
+    fn window(&self) -> &Window;
+    fn resize(&mut self, new_size: PhysicalSize<u32>);
+    fn input(&mut self, event: &WindowEvent) -> bool;
+    fn update(&mut self);
+    fn render(&mut self) -> Result<(), SurfaceError>;
+    fn size(&self) -> PhysicalSize<u32>;
+}
 
 pub struct State {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    pub(crate) size: winit::dpi::PhysicalSize<u32>,
+    size: winit::dpi::PhysicalSize<u32>,
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
     depth_texture: texture::Texture,
-    camera: Camera,
+    camera: CameraPerspective,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: BindGroup,
@@ -110,7 +121,7 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
-        let camera = Camera {
+        let camera = CameraPerspective {
             aspect: config.width as f32 / config.height as f32,
             eye: (0.0, 1.0, 2.0).into(),
             target: (0.0, 0.0, 0.0).into(),
@@ -235,12 +246,13 @@ impl State {
             instance_buffer,
         }
     }
-
-    pub fn window(&self) -> &Window {
+}
+impl RenderState for State {
+    fn window(&self) -> &Window {
         &self.window
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;
             self.config.width = new_size.width;
@@ -251,19 +263,18 @@ impl State {
             texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
     }
 
-    #[allow(unused_variables)]
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
+    fn input(&mut self, event: &WindowEvent) -> bool {
         self.camera_controller.process_events(event)
     }
 
-    pub fn update(&mut self) {
+    fn update(&mut self) {
         self.camera_controller.update_camera(&mut self.camera);
         self.camera_uniform.update_view_proj(&self.camera);
         self.queue
             .write_buffer(&self.camera_buffer, 0, cast_slice(&[self.camera_uniform]));
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -313,5 +324,9 @@ impl State {
         output.present();
 
         Ok(())
+    }
+
+    fn size(&self) -> PhysicalSize<u32> {
+        self.size
     }
 }

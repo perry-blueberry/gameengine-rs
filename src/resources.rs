@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::*;
+use cgmath::Vector3;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindingResource, BufferUsages, Device,
@@ -15,6 +16,8 @@ use crate::{
     model::{self, ModelVertex},
     texture,
 };
+
+use crate::animation::track::DefaultConstructable;
 
 fn get_path(file_name: &str) -> PathBuf {
     Path::new(env!("OUT_DIR")).join("res").join(file_name)
@@ -142,7 +145,7 @@ async fn load_obj_model(
                 num_elements: m.mesh.indices.len() as u32,
                 material: m.mesh.material_id.unwrap_or(0),
                 model_vertices: vertices,
-                positions: todo!(),
+                positions: Vector3::default(),
             }
         })
         .collect::<Vec<_>>();
