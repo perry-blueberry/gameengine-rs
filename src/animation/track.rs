@@ -65,7 +65,7 @@ where
         result.adjust_hermite_result()
     }
 
-    pub fn sample(&self, mut t: f32, looping: bool) -> T {
+    pub fn sample(&self, t: f32, looping: bool) -> T {
         match self.interp {
             Interpolation::Constant => self.sample_constant(t, looping),
             Interpolation::Linear => self.sample_linear(t, looping),
