@@ -1,6 +1,6 @@
 use cgmath::Vector3;
 
-use crate::model;
+use crate::rendering::model;
 
 pub struct AABB {
     min: Vector3<f32>,

@@ -1,100 +1,24 @@
-use std::iter;
-
 use cgmath::Vector3;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, ShaderStages,
-    VertexBufferLayout,
+    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, RenderPass,
+    ShaderStages, SurfaceConfiguration, VertexBufferLayout,
 };
-use winit::window::Window;
 
 use crate::camera::{CameraOrtho, CameraUniform};
 
-use super::state::RenderState;
+use super::renderable::RenderableT;
 
-pub struct LineRenderState {
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-    size: winit::dpi::PhysicalSize<u32>,
+pub struct LineRender {
     render_pipeline: wgpu::RenderPipeline,
-    camera: CameraOrtho,
-    camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
     camera_bind_group: BindGroup,
     vertex_buffer: wgpu::Buffer,
     num_vertices: u32,
-    window: Window,
 }
 
-impl LineRenderState {
-    pub async fn new(window: Window, lines: Vec<Line>) -> Self {
-        let size = window.inner_size();
-
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            dx12_shader_compiler: Default::default(),
-        });
-
-        // # Safety
-        //
-        // The surface needs to live as long as the window that created it.
-        // State owns the window so this should be safe.
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
-
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            })
-            .await
-            .unwrap();
-
-        let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu's features, so if
-                    // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
-                    },
-                },
-                None, // Trace path
-            )
-            .await
-            .unwrap();
-
-        let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors comming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .filter(|f| f.describe().srgb)
-            .next()
-            .unwrap_or(surface_caps.formats[0]);
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: size.width,
-            height: size.height,
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-        };
-        surface.configure(&device, &config);
-
+impl LineRender {
+    pub fn new(lines: Vec<Line>, device: &Device, config: &SurfaceConfiguration) -> LineRender {
         let camera = CameraOrtho {
             eye: (0.0, 0.0, 5.0).into(),
             target: (0.0, 0.0, 0.0).into(),
@@ -202,36 +126,16 @@ impl LineRenderState {
         });
 
         Self {
-            surface,
-            device,
-            queue,
-            config,
-            size,
             render_pipeline,
-            camera,
-            camera_uniform,
-            camera_buffer,
             camera_bind_group,
             vertex_buffer,
             num_vertices: lines.len() as u32,
-            window,
         }
     }
 }
 
-impl RenderState for LineRenderState {
-    fn window(&self) -> &Window {
-        &self.window
-    }
-
-    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        if new_size.width > 0 && new_size.height > 0 {
-            self.size = new_size;
-            self.config.width = new_size.width;
-            self.config.height = new_size.height;
-            self.surface.configure(&self.device, &self.config);
-        }
-    }
+impl RenderableT for LineRender {
+    fn resize(&mut self, _new_size: winit::dpi::PhysicalSize<u32>) {}
 
     fn input(&mut self, _event: &winit::event::WindowEvent) -> bool {
         false
@@ -239,51 +143,16 @@ impl RenderState for LineRenderState {
 
     fn update(&mut self) {}
 
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
-            });
-
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            render_pass.draw(0..self.num_vertices, 0..1);
-        }
-
-        self.queue.submit(iter::once(encoder.finish()));
-        output.present();
+    fn render<'a, 'b: 'a>(
+        &'b mut self,
+        render_pass: &'a mut RenderPass<'b>,
+    ) -> Result<(), wgpu::SurfaceError> {
+        render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+        render_pass.draw(0..self.num_vertices, 0..1);
 
         Ok(())
-    }
-
-    fn size(&self) -> winit::dpi::PhysicalSize<u32> {
-        self.size
     }
 }
 

@@ -13,7 +13,7 @@ use wgpu::{
 };
 
 use crate::{
-    model::{self, ModelVertex},
+    rendering::model::{self, ModelVertex},
     texture,
 };
 

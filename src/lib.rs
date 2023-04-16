@@ -1,6 +1,4 @@
-use camera::CameraPerspective;
-
-use rendering::state::RenderState;
+use rendering::state::State;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -12,16 +10,12 @@ mod camera_controller;
 mod collisions;
 mod instance;
 mod math;
-pub mod model;
 pub mod rendering;
 mod resources;
 mod texture;
 
-pub fn run<S: 'static + RenderState>(event_loop: EventLoop<()>, mut state: S) {
+pub fn run(event_loop: EventLoop<()>, mut state: State) {
     env_logger::init();
-    /*     let event_loop = EventLoop::new();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
-    let mut state = S::new(window).await; */
 
     event_loop.run(move |event, _, control_flow| {
         match event {
