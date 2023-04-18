@@ -2,10 +2,10 @@ use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, RenderPass,
-    RenderPipeline, ShaderStages, SurfaceConfiguration, VertexBufferLayout,
+    RenderPipeline, ShaderStages, SurfaceConfiguration,
 };
 
-use super::renderable::RenderableT;
+use super::renderable::{RenderableT, SimpleVertex, Vertex};
 
 pub struct LineRender {
     render_pipeline: RenderPipeline,
@@ -16,7 +16,7 @@ pub struct LineRender {
 
 impl LineRender {
     pub fn new(
-        lines: Vec<Line>,
+        lines: Vec<SimpleVertex>,
         device: &Device,
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
@@ -62,7 +62,7 @@ impl LineRender {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Line::desc()],
+                buffers: &[SimpleVertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -132,35 +132,6 @@ impl RenderableT for LineRender {
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
         render_pass.draw(0..self.num_vertices, 0..1);
-
         Ok(())
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Line {
-    pub position: [f32; 3],
-    pub color: [f32; 3],
-}
-
-impl Line {
-    fn desc<'a>() -> VertexBufferLayout<'a> {
-        VertexBufferLayout {
-            array_stride: std::mem::size_of::<Line>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-            ],
-        }
     }
 }

@@ -20,9 +20,7 @@ use crate::instance::InstanceRaw;
 use crate::texture::create_texture_bind_group_layout;
 use crate::{instance::Instance, rendering::renderable::RenderableT, resources, texture};
 
-pub trait Vertex {
-    fn desc<'a>() -> VertexBufferLayout<'a>;
-}
+use super::renderable::Vertex;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]
