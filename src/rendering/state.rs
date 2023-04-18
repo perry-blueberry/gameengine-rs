@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::camera::{CameraPerspective, CameraUniform};
+use crate::camera::{CameraOrtho, CameraPerspective, CameraUniform};
 use crate::camera_controller::CameraController;
 
 use crate::texture;
@@ -26,10 +26,13 @@ pub struct State {
     size: PhysicalSize<u32>,
     window: Window,
     depth_texture: texture::Texture,
-    camera: CameraPerspective,
-    camera_uniform: CameraUniform,
-    pub camera_buffer: wgpu::Buffer,
-    camera_controller: CameraController,
+    camera_persp: CameraPerspective,
+    camera_persp_uniform: CameraUniform,
+    pub camera_persp_buffer: wgpu::Buffer,
+    camera_persp_controller: CameraController,
+    camera_ortho: CameraOrtho,
+    camera_ortho_uniform: CameraUniform,
+    pub camera_ortho_buffer: wgpu::Buffer,
     renderables: Vec<Renderable>,
     ui_renderables: Vec<Renderable>,
 }
@@ -98,7 +101,7 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
-        let camera = CameraPerspective {
+        let camera_persp = CameraPerspective {
             aspect: config.width as f32 / config.height as f32,
             eye: (0.0, 1.0, 2.0).into(),
             target: (0.0, 0.0, 0.0).into(),
@@ -108,14 +111,35 @@ impl State {
             up: Vector3::unit_y(),
         };
 
-        let camera_controller = CameraController::new(0.02);
+        let camera_persp_controller = CameraController::new(0.02);
 
-        let mut camera_uniform = CameraUniform::new();
-        camera_uniform.update_view_proj(&camera);
+        let mut camera_persp_uniform = CameraUniform::new();
+        camera_persp_uniform.update_view_proj(&camera_persp);
 
-        let camera_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: cast_slice(&[camera_uniform]),
+        let camera_persp_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("Perspective Camera Buffer"),
+            contents: cast_slice(&[camera_persp_uniform]),
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+        });
+
+        let camera_ortho = CameraOrtho {
+            eye: (0.0, 0.0, 5.0).into(),
+            target: (0.0, 0.0, 0.0).into(),
+            up: Vector3::unit_y(),
+            left: 0.0,
+            right: (config.width as f32 / config.height as f32) * 22.0,
+            bottom: 0.0,
+            top: 22.0,
+            near: 0.001,
+            far: 10.0,
+        };
+
+        let mut camera_ortho_uniform = CameraUniform::new();
+        camera_ortho_uniform.update_view_proj(&camera_ortho);
+
+        let camera_ortho_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("Orthographic Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_ortho_uniform]),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
 
@@ -127,10 +151,13 @@ impl State {
             config,
             size,
             depth_texture,
-            camera,
-            camera_uniform,
-            camera_buffer,
-            camera_controller,
+            camera_persp,
+            camera_persp_uniform,
+            camera_persp_buffer,
+            camera_persp_controller,
+            camera_ortho,
+            camera_ortho_uniform,
+            camera_ortho_buffer,
             renderables: vec![],
             ui_renderables: vec![],
         }
@@ -160,14 +187,19 @@ impl State {
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        self.camera_controller.process_events(event)
+        self.camera_persp_controller.process_events(event)
     }
 
     pub fn update(&mut self) {
-        self.camera_controller.update_camera(&mut self.camera);
-        self.camera_uniform.update_view_proj(&self.camera);
-        self.queue
-            .write_buffer(&self.camera_buffer, 0, cast_slice(&[self.camera_uniform]));
+        self.camera_persp_controller
+            .update_camera(&mut self.camera_persp);
+        self.camera_persp_uniform
+            .update_view_proj(&self.camera_persp);
+        self.queue.write_buffer(
+            &self.camera_persp_buffer,
+            0,
+            cast_slice(&[self.camera_persp_uniform]),
+        );
         for renderable in &mut self.renderables {
             renderable.update();
         }

@@ -1,45 +1,26 @@
-use cgmath::Vector3;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, RenderPass,
-    ShaderStages, SurfaceConfiguration, VertexBufferLayout,
+    RenderPipeline, ShaderStages, SurfaceConfiguration, VertexBufferLayout,
 };
-
-use crate::camera::{CameraOrtho, CameraUniform};
 
 use super::renderable::RenderableT;
 
 pub struct LineRender {
-    render_pipeline: wgpu::RenderPipeline,
+    render_pipeline: RenderPipeline,
     camera_bind_group: BindGroup,
     vertex_buffer: wgpu::Buffer,
     num_vertices: u32,
 }
 
 impl LineRender {
-    pub fn new(lines: Vec<Line>, device: &Device, config: &SurfaceConfiguration) -> LineRender {
-        let camera = CameraOrtho {
-            eye: (0.0, 0.0, 5.0).into(),
-            target: (0.0, 0.0, 0.0).into(),
-            up: Vector3::unit_y(),
-            left: 0.0,
-            right: (config.width as f32 / config.height as f32) * 22.0,
-            bottom: 0.0,
-            top: 22.0,
-            near: 0.001,
-            far: 10.0,
-        };
-
-        let mut camera_uniform = CameraUniform::new();
-        camera_uniform.update_view_proj(&camera);
-
-        let camera_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        });
-
+    pub fn new(
+        lines: Vec<Line>,
+        device: &Device,
+        config: &SurfaceConfiguration,
+        camera_buffer: &wgpu::Buffer,
+    ) -> Self {
         let camera_bind_group_layout =
             device.create_bind_group_layout(&BindGroupLayoutDescriptor {
                 label: Some("camera_bind_group_layout"),

@@ -13,7 +13,7 @@ fn main() {
         &state.device,
         &state.queue,
         &state.config,
-        &state.camera_buffer,
+        &state.camera_persp_buffer,
     ))
     .expect("Unable to create model");
     state.add_renderable(Renderable::Model(model));

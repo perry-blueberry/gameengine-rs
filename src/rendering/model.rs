@@ -7,23 +7,11 @@ use bytemuck::{Pod, Zeroable};
 use cgmath::Vector3;
 use wgpu::util::BufferInitDescriptor;
 use wgpu::util::DeviceExt;
-use wgpu::BindGroupDescriptor;
-use wgpu::BindGroupEntry;
-use wgpu::BindGroupLayoutDescriptor;
-use wgpu::BindGroupLayoutEntry;
-use wgpu::BindingType;
-use wgpu::BufferBindingType;
-use wgpu::BufferUsages;
-use wgpu::ColorWrites;
-use wgpu::CompareFunction;
-use wgpu::DepthBiasState;
-use wgpu::DepthStencilState;
-use wgpu::MultisampleState;
-use wgpu::ShaderStages;
-use wgpu::StencilState;
-use wgpu::SurfaceConfiguration;
 use wgpu::{
-    BindGroup, BufferAddress, Device, IndexFormat, Queue, RenderPass, RenderPipeline,
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BufferAddress, BufferBindingType, BufferUsages, ColorWrites,
+    CompareFunction, DepthBiasState, DepthStencilState, Device, IndexFormat, MultisampleState,
+    Queue, RenderPass, RenderPipeline, ShaderStages, StencilState, SurfaceConfiguration,
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 
@@ -177,14 +165,9 @@ impl TriangleModel {
         camera_buffer: &wgpu::Buffer,
     ) -> Result<Self> {
         let texture_bind_group_layout = create_texture_bind_group_layout(&device);
-        let model = resources::load_model(
-            model_name, /* "cube.obj" */
-            &device,
-            &queue,
-            &texture_bind_group_layout,
-        )
-        .await
-        .unwrap();
+        let model = resources::load_model(model_name, &device, &queue, &texture_bind_group_layout)
+            .await
+            .unwrap();
 
         let camera_bind_group_layout =
             device.create_bind_group_layout(&BindGroupLayoutDescriptor {
