@@ -17,7 +17,7 @@ use crate::{
     texture,
 };
 
-use crate::animation::track::DefaultConstructable;
+use crate::animation::track::DefaultConstructible;
 
 fn get_path(file_name: &str) -> PathBuf {
     Path::new(env!("OUT_DIR")).join("res").join(file_name)

@@ -1,6 +1,6 @@
 use cgmath::{Quaternion, Vector3};
 
-use super::track::DefaultConstructable;
+use super::track::DefaultConstructible;
 
 use super::array_type::ArrayType;
 
@@ -20,7 +20,7 @@ pub type QuatFrame = Frame<Quaternion<f32>>;
 impl<A: ArrayType> Frame<A> {
     pub fn new_simple(time: f32, value: A) -> Frame<A>
     where
-        A: DefaultConstructable,
+        A: DefaultConstructible,
     {
         Self::new(time, A::default(), A::default(), value)
     }

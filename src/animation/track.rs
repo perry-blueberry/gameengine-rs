@@ -26,7 +26,7 @@ where
         + Copy
         + Mul<f32, Output = T>
         + Add<Output = T>
-        + DefaultConstructable
+        + DefaultConstructible
         + ArrayType
         + Interpolate,
 {
@@ -197,17 +197,17 @@ where
     }
 }
 
-pub trait DefaultConstructable {
+pub trait DefaultConstructible {
     fn default() -> Self;
 }
 
-impl DefaultConstructable for f32 {
+impl DefaultConstructible for f32 {
     fn default() -> Self {
         Default::default()
     }
 }
 
-impl DefaultConstructable for Vector3<f32> {
+impl DefaultConstructible for Vector3<f32> {
     fn default() -> Self {
         Self {
             x: Default::default(),
@@ -217,10 +217,10 @@ impl DefaultConstructable for Vector3<f32> {
     }
 }
 
-impl DefaultConstructable for Quaternion<f32> {
+impl DefaultConstructible for Quaternion<f32> {
     fn default() -> Self {
         Self {
-            v: DefaultConstructable::default(),
+            v: DefaultConstructible::default(),
             s: Default::default(),
         }
     }
