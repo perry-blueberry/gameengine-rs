@@ -143,13 +143,13 @@ where
         if self.frames.len() < 2 {
             return None;
         }
+        let start_time = self.frames[0].time;
         if looping {
-            let start_time = self.start_time()?;
-            let end_time = self.end_time()?;
+            let end_time = self.frames[self.frames.len() - 1].time;
             t = self.loop_time(t, start_time, end_time);
         } else {
             // If time is before or at the first frame, return 0
-            if t <= self.frames[0].time {
+            if t <= start_time {
                 return Some(0);
             }
             // If time is at or after the second-to-last frame, return the index of the second-to-last frame
@@ -190,7 +190,7 @@ where
         let duration = end_time - start_time;
         // Wrap the time value within the duration of the frames
         t = (t - start_time) % duration;
-        if t <= 0.0 {
+        if t < 0.0 {
             t += duration;
         }
         t + start_time
