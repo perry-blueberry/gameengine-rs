@@ -180,7 +180,6 @@ where
         if looping {
             t = self.loop_time(t, start_time, end_time);
         } else {
-            println!("t {} start {} end {}", t, start_time, end_time);
             t = clamp(t, start_time, end_time);
         }
         t

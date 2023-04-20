@@ -156,7 +156,6 @@ fn vertices_to_points(vertices: &Vec<SimpleVertex>) -> (Vec<SimpleVertex>, Vec<u
     /* new_indices.reserve(0); */
     for (idx, vertex) in vertices.iter().enumerate() {
         let start_index = new_vertices.len() as u32;
-        println!("start_index {}", start_index);
         new_vertices.push(SimpleVertex {
             position: [
                 vertex.position[0] - POINT_SIZE,
