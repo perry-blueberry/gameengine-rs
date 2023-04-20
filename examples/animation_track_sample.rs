@@ -176,7 +176,6 @@ impl Sample {
         }
 
         for i in 0..scalar_tracks.len() {
-            println!("i {}", i);
             let y_pos = ((9 - i) as f32 * 2.0) + ((9 - i) as f32 * 0.2) + 0.1;
 
             for j in 1..150 {
@@ -194,7 +193,6 @@ impl Sample {
                     let next_y = scalar_tracks[i].sample(next_j_norm, scalar_tracks_looping[i]);
                     y_pos + next_y * height
                 };
-                println!("apa {} this_y {}, next_y {}", j, this_y, next_y);
 
                 scalar_track_lines.push(SimpleVertex {
                     position: [this_x, this_y, 0.1],
@@ -211,7 +209,6 @@ impl Sample {
                 let this_time = scalar_tracks[i].frame(j).time;
                 let this_y =
                     y_pos + scalar_tracks[i].sample(this_time, scalar_tracks_looping[i]) * height;
-                println!("bepa {} this_y {}", j, this_y);
                 let this_x = left + this_time * x_range;
                 handle_points.push(SimpleVertex {
                     position: [this_x, this_y, 0.9],
@@ -222,7 +219,6 @@ impl Sample {
                     let prev_y = y_pos
                         + scalar_tracks[i].sample(this_time - 0.0005, scalar_tracks_looping[i])
                             * height;
-                    println!("cepa {} prev_y {}", j, prev_y);
                     let prev_x = left + (this_time - 0.0005) * x_range;
 
                     let this_vec = Vector3::new(this_x, this_y, 0.6);
@@ -243,7 +239,6 @@ impl Sample {
                     let next_y = y_pos
                         + scalar_tracks[i].sample(this_time + 0.0005, scalar_tracks_looping[i])
                             * height;
-                    println!("depa {} next_y {}", i, next_y);
                     let next_x = left + (this_time + 0.0005) * x_range;
 
                     let this_vec = Vector3::new(this_x, this_y, 0.6);
