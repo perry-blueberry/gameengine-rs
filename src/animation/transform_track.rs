@@ -10,6 +10,15 @@ pub struct TransformTrack {
 }
 
 impl TransformTrack {
+    pub fn new(id: u32) -> Self {
+        Self {
+            id,
+            position: Vector3Track::new(),
+            rotation: QuatTrack::new(),
+            scale: Vector3Track::new(),
+        }
+    }
+
     pub fn is_valid(&self) -> bool {
         self.position.len() > 0 || self.rotation.len() > 0 || self.scale.len() > 0
     }

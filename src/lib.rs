@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use rendering::state::State;
 use winit::{
     event::*,
@@ -17,7 +19,23 @@ mod texture;
 pub fn run(event_loop: EventLoop<()>, mut state: State) {
     env_logger::init();
 
+    let mut previous_time = Instant::now();
+    let mut frame_counter = 0;
+    let mut delta_accum = Duration::ZERO;
     event_loop.run(move |event, _, control_flow| {
+        let now = Instant::now();
+        let delta = now - previous_time;
+        delta_accum += delta;
+        previous_time = now;
+        frame_counter += 1;
+        if delta_accum.as_secs() > 1 {
+            println!(
+                "FPS: {}",
+                1.0 / (delta_accum.as_secs_f32() / frame_counter as f32)
+            );
+            frame_counter = 0;
+            delta_accum = Duration::ZERO;
+        }
         match event {
             Event::WindowEvent {
                 ref event,

@@ -146,7 +146,7 @@ where
         let start_time = self.frames[0].time;
         if looping {
             let end_time = self.frames[self.frames.len() - 1].time;
-            t = self.loop_time(t, start_time, end_time);
+            t = loop_time(t, start_time, end_time);
         } else {
             // If time is before or at the first frame, return 0
             if t <= start_time {
@@ -178,22 +178,22 @@ where
             return 0.0;
         }
         if looping {
-            t = self.loop_time(t, start_time, end_time);
+            t = loop_time(t, start_time, end_time);
         } else {
             t = clamp(t, start_time, end_time);
         }
         t
     }
+}
 
-    fn loop_time(&self, mut t: f32, start_time: f32, end_time: f32) -> f32 {
-        let duration = end_time - start_time;
-        // Wrap the time value within the duration of the frames
-        t = (t - start_time) % duration;
-        if t < 0.0 {
-            t += duration;
-        }
-        t + start_time
+pub fn loop_time(mut t: f32, start_time: f32, end_time: f32) -> f32 {
+    let duration = end_time - start_time;
+    // Wrap the time value within the duration of the frames
+    t = (t - start_time) % duration;
+    if t < 0.0 {
+        t += duration;
     }
+    t + start_time
 }
 
 pub trait DefaultConstructible {
