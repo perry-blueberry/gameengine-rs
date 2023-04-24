@@ -36,8 +36,6 @@ impl Clip {
     }
 
     pub fn recalculate_duration(&mut self) {
-        let start_time = 0.0;
-        let end_time = 0.0;
         if let Some(s) = self
             .tracks
             .iter()
@@ -46,6 +44,8 @@ impl Clip {
             .reduce(f32::min)
         {
             self.start_time = s;
+        } else {
+            self.start_time = 0.0;
         }
         if let Some(e) = self
             .tracks
@@ -55,6 +55,8 @@ impl Clip {
             .reduce(f32::max)
         {
             self.end_time = e;
+        } else {
+            self.end_time = 0.0;
         }
     }
 

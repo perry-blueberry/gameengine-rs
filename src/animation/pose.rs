@@ -1,6 +1,6 @@
 use cgmath::{Decomposed, Quaternion, Transform as Tf, Vector3};
 
-type Transform = Decomposed<Vector3<f32>, Quaternion<f32>>;
+pub(crate) type Transform = Decomposed<Vector3<f32>, Quaternion<f32>>;
 
 #[derive(Debug, PartialEq)]
 pub struct Pose {
@@ -9,6 +9,12 @@ pub struct Pose {
 }
 
 impl Pose {
+    pub fn new() -> Self {
+        Self {
+            joints: vec![],
+            parents: vec![],
+        }
+    }
     pub fn len(&self) -> usize {
         self.joints.len()
     }
