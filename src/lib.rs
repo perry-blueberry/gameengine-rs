@@ -14,7 +14,7 @@ mod instance;
 mod math;
 pub mod rendering;
 mod resources;
-mod texture;
+pub mod texture;
 
 pub fn run(event_loop: EventLoop<()>, mut state: State) {
     env_logger::init();
@@ -65,7 +65,7 @@ pub fn run(event_loop: EventLoop<()>, mut state: State) {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                state.update();
+                state.update(delta.as_secs_f32() * 1000.0);
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated

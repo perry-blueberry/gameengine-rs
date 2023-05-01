@@ -264,7 +264,7 @@ impl RenderableT for TriangleModel {
         false
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self, delta_time: f32, queue: &Queue) {}
 
     fn render<'a, 'b: 'a>(
         &'b mut self,

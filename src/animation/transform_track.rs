@@ -2,11 +2,12 @@ use super::track::{QuatTrack, Vector3Track};
 
 use cgmath::{Decomposed, Quaternion, Vector3};
 
+#[derive(Clone)]
 pub struct TransformTrack {
     pub id: u32,
-    position: Vector3Track,
-    rotation: QuatTrack,
-    scale: Vector3Track,
+    pub position: Vector3Track,
+    pub rotation: QuatTrack,
+    pub scale: Vector3Track,
 }
 
 impl TransformTrack {

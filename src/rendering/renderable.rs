@@ -1,12 +1,16 @@
-use wgpu::{RenderPass, SurfaceError, VertexBufferLayout};
+use wgpu::{Queue, RenderPass, SurfaceError, VertexBufferLayout};
 use winit::{dpi::PhysicalSize, event::WindowEvent};
 
-use super::{line::LineRender, model::TriangleModel, point::PointRender};
+use super::{
+    animation_clip_player::AnimationClipPlayer, line::LineRender, model::TriangleModel,
+    point::PointRender,
+};
 
 pub enum Renderable {
     Model(TriangleModel),
     Line(LineRender),
     Point(PointRender),
+    AnimationClipPlayer(AnimationClipPlayer),
 }
 
 impl RenderableT for Renderable {
@@ -15,6 +19,7 @@ impl RenderableT for Renderable {
             Renderable::Model(m) => m.resize(new_size),
             Renderable::Line(l) => l.resize(new_size),
             Renderable::Point(p) => p.resize(new_size),
+            Renderable::AnimationClipPlayer(a) => a.resize(new_size),
         }
     }
     fn input(&mut self, event: &WindowEvent) -> bool {
@@ -22,13 +27,15 @@ impl RenderableT for Renderable {
             Renderable::Model(m) => m.input(event),
             Renderable::Line(l) => l.input(event),
             Renderable::Point(p) => p.input(event),
+            Renderable::AnimationClipPlayer(a) => a.input(event),
         }
     }
-    fn update(&mut self) {
+    fn update(&mut self, delta_time: f32, queue: &Queue) {
         match self {
-            Renderable::Model(m) => m.update(),
-            Renderable::Line(l) => l.update(),
-            Renderable::Point(p) => p.update(),
+            Renderable::Model(m) => m.update(delta_time, queue),
+            Renderable::Line(l) => l.update(delta_time, queue),
+            Renderable::Point(p) => p.update(delta_time, queue),
+            Renderable::AnimationClipPlayer(a) => a.update(delta_time, queue),
         }
     }
     fn render<'a, 'b: 'a>(
@@ -39,6 +46,7 @@ impl RenderableT for Renderable {
             Renderable::Model(m) => m.render(render_pass),
             Renderable::Line(l) => l.render(render_pass),
             Renderable::Point(p) => p.render(render_pass),
+            Renderable::AnimationClipPlayer(a) => a.render(render_pass),
         }
     }
 }
@@ -46,7 +54,7 @@ impl RenderableT for Renderable {
 pub trait RenderableT {
     fn resize(&mut self, new_size: PhysicalSize<u32>);
     fn input(&mut self, event: &WindowEvent) -> bool;
-    fn update(&mut self);
+    fn update(&mut self, delta_time: f32, queue: &Queue);
     fn render<'a, 'b: 'a>(
         &'b mut self,
         render_pass: &'a mut RenderPass<'b>,
@@ -83,4 +91,8 @@ impl Vertex for SimpleVertex {
             ],
         }
     }
+}
+
+pub trait Updatable {
+    fn update(&mut self, delta_time: f32);
 }

@@ -27,13 +27,18 @@ impl Pose {
         self.joints[idx] = tf;
     }
 
+    pub fn add_local_transform(&mut self, tf: Transform) {
+        self.joints.push(tf);
+    }
+
     pub fn global_transform(&self, idx: usize) -> Transform {
         let mut res = self.joints[idx];
-        let mut parent_index =
-            self.parents[idx].expect(&format!("idx {} does not have a parent", idx));
-        while let Some(parent) = self.parents[parent_index] {
-            parent_index = parent;
-            res = self.joints[parent].concat(&res);
+        if let Some(mut parent_index) = self.parents[idx] {
+            res = self.joints[parent_index].concat(&res);
+            while let Some(parent) = self.parents[parent_index] {
+                parent_index = parent;
+                res = self.joints[parent_index].concat(&res);
+            }
         }
         res
     }
@@ -50,5 +55,9 @@ impl Pose {
 
     pub fn unset_parent(&mut self, idx: usize) {
         self.parents[idx] = None
+    }
+
+    pub fn add_parent(&mut self, parent: Option<usize>) {
+        self.parents.push(parent);
     }
 }

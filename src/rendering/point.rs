@@ -1,7 +1,7 @@
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, IndexFormat,
+    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, IndexFormat, Queue,
     RenderPipeline, ShaderStages, SurfaceConfiguration,
 };
 
@@ -132,7 +132,7 @@ impl RenderableT for PointRender {
         false
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self, delta_time: f32, queue: &Queue) {}
 
     fn render<'a, 'b: 'a>(
         &'b mut self,

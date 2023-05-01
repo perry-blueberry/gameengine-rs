@@ -13,9 +13,9 @@ pub type ScalarTrack = Track<f32>;
 pub type Vector3Track = Track<Vector3<f32>>;
 pub type QuatTrack = Track<Quaternion<f32>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Track<T: ArrayType> {
-    frames: Vec<Frame<T>>,
+    pub frames: Vec<Frame<T>>,
     interp: Interpolation,
 }
 

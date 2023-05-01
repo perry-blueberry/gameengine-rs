@@ -1,8 +1,8 @@
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, Device, RenderPass,
-    RenderPipeline, ShaderStages, SurfaceConfiguration,
+    BindGroupLayoutEntry, BindingType, BufferBindingType, BufferUsages, DepthStencilState, Device,
+    Queue, RenderPass, RenderPipeline, ShaderStages, SurfaceConfiguration,
 };
 
 use super::renderable::{RenderableT, SimpleVertex, Vertex};
@@ -20,6 +20,7 @@ impl LineRender {
         device: &Device,
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
+        depth_stencil: Option<DepthStencilState>,
     ) -> Self {
         let camera_bind_group_layout =
             device.create_bind_group_layout(&BindGroupLayoutDescriptor {
@@ -89,7 +90,7 @@ impl LineRender {
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil,
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -103,7 +104,7 @@ impl LineRender {
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&lines),
-            usage: BufferUsages::VERTEX,
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         Self {
@@ -112,6 +113,10 @@ impl LineRender {
             vertex_buffer,
             num_vertices: lines.len() as u32,
         }
+    }
+
+    pub fn update_lines(&mut self, vertices: Vec<SimpleVertex>, queue: &Queue) {
+        queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
     }
 }
 
@@ -122,7 +127,7 @@ impl RenderableT for LineRender {
         false
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self, delta_time: f32, queue: &Queue) {}
 
     fn render<'a, 'b: 'a>(
         &'b mut self,

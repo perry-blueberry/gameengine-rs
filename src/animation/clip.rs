@@ -2,19 +2,20 @@ use cgmath::num_traits::clamp;
 
 use super::{pose::Pose, track::loop_time, transform_track::TransformTrack};
 
+#[derive(Clone)]
 pub struct Clip {
     tracks: Vec<TransformTrack>,
-    pub name: &'static str,
+    pub name: String,
     start_time: f32,
     end_time: f32,
     pub looping: bool,
 }
 
 impl Clip {
-    pub fn new() -> Self {
+    pub fn new(name: Option<&str>) -> Self {
         Self {
             tracks: vec![],
-            name: "No name given",
+            name: name.unwrap_or("No name given").to_owned(),
             start_time: 0.0,
             end_time: 0.0,
             looping: true,
@@ -60,16 +61,28 @@ impl Clip {
         }
     }
 
-    pub fn transform_track(&mut self, joint: u32) -> Option<&TransformTrack> {
+    pub fn transform_track(&mut self, joint: u32) -> &mut TransformTrack {
         let track_index = self.tracks.iter().position(|track| track.id == joint);
         match track_index {
-            Some(idx) => Some(&self.tracks[idx]),
+            Some(idx) => &mut self.tracks[idx],
             None => {
                 self.tracks.push(TransformTrack::new(joint));
-                self.tracks.last()
+                self.tracks.last_mut().unwrap()
             }
         }
     }
+
+    pub fn add_track(&mut self, track: TransformTrack) {
+        self.tracks.push(track);
+    }
+    /*
+    pub fn get_or_insert_transform_track(&mut self, joint: u32) -> &TransformTrack {
+        if let Some(transform_track) = self.transform_track(joint) {
+            return &transform_track;
+        }
+        /* self.tracks.push(TransformTrack::new(joint)); */
+        &mut self.tracks.last().unwrap()
+    } */
 
     fn adjust_time_to_fit_range(&self, mut in_time: f32) -> f32 {
         if self.looping {

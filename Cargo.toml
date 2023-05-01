@@ -17,6 +17,8 @@ image = "0.24"
 anyhow = "1.0"
 cgmath = "0.18"
 tobj = {version = "3.2.1", features=["async"]}
+percent-encoding = "2.2"
+base64 = "0.21"
 
 [build-dependencies]
 anyhow = "1.0"

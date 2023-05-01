@@ -4,7 +4,7 @@ use cgmath::{Quaternion, Vector3};
 
 pub trait ArrayType {
     const LENGTH: usize;
-    type Slice: AsRef<[f32]> + AsMut<[f32]> + Debug;
+    type Slice: AsRef<[f32]> + AsMut<[f32]> + Debug + Clone;
 
     fn from_slice(array: &Self::Slice) -> Self;
     fn to_slice(&self) -> Self::Slice;

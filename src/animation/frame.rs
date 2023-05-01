@@ -5,7 +5,7 @@ use super::track::DefaultConstructible;
 use super::array_type::ArrayType;
 
 /// Used to store keyframes in a Track
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Frame<A: ArrayType> {
     pub value: A::Slice,
     pub in_tangent: A::Slice,

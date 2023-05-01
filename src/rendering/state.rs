@@ -16,7 +16,7 @@ use winit::event::*;
 
 use winit::window::Window;
 
-use super::renderable::{Renderable, RenderableT};
+use super::renderable::{Renderable, RenderableT, Updatable};
 
 pub struct State {
     pub surface: Surface,
@@ -103,9 +103,9 @@ impl State {
 
         let camera_persp = CameraPerspective {
             aspect: config.width as f32 / config.height as f32,
-            eye: (0.0, 1.0, 2.0).into(),
-            target: (0.0, 0.0, 0.0).into(),
-            fovy: 45.0,
+            eye: (0.0, 4.0, 7.0).into(),
+            target: (0.0, 4.0, 0.0).into(),
+            fovy: 60.0,
             znear: 0.1,
             zfar: 100.0,
             up: Vector3::unit_y(),
@@ -113,7 +113,7 @@ impl State {
 
         let camera_persp_controller = CameraController::new(0.02);
 
-        let mut camera_persp_uniform = CameraUniform::new();
+        let mut camera_persp_uniform: CameraUniform = CameraUniform::new();
         camera_persp_uniform.update_view_proj(&camera_persp);
 
         let camera_persp_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -190,7 +190,7 @@ impl State {
         self.camera_persp_controller.process_events(event)
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, delta_time: f32) {
         self.camera_persp_controller
             .update_camera(&mut self.camera_persp);
         self.camera_persp_uniform
@@ -201,7 +201,7 @@ impl State {
             cast_slice(&[self.camera_persp_uniform]),
         );
         for renderable in &mut self.renderables {
-            renderable.update();
+            renderable.update(delta_time, &self.queue);
         }
     }
 

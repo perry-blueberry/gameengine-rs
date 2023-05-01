@@ -31,6 +31,7 @@ pub fn main() {
         &state.device,
         &state.config,
         &state.camera_ortho_buffer,
+        None,
     );
     state.add_ui_renderable(Renderable::Line(line_render));
     let point_render = PointRender::new(
