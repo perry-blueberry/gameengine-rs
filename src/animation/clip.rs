@@ -75,14 +75,6 @@ impl Clip {
     pub fn add_track(&mut self, track: TransformTrack) {
         self.tracks.push(track);
     }
-    /*
-    pub fn get_or_insert_transform_track(&mut self, joint: u32) -> &TransformTrack {
-        if let Some(transform_track) = self.transform_track(joint) {
-            return &transform_track;
-        }
-        /* self.tracks.push(TransformTrack::new(joint)); */
-        &mut self.tracks.last().unwrap()
-    } */
 
     fn adjust_time_to_fit_range(&self, mut in_time: f32) -> f32 {
         if self.looping {

@@ -16,7 +16,7 @@ use winit::event::*;
 
 use winit::window::Window;
 
-use super::renderable::{Renderable, RenderableT, Updatable};
+use super::renderable::{Renderable, RenderableT};
 
 pub struct State {
     pub surface: Surface,

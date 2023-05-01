@@ -154,7 +154,7 @@ fn vertices_to_points(vertices: &Vec<SimpleVertex>) -> (Vec<SimpleVertex>, Vec<u
     /* new_vertices.reserve(vertices.len() * 4); */
     let mut new_indices = Vec::new();
     /* new_indices.reserve(0); */
-    for (idx, vertex) in vertices.iter().enumerate() {
+    for vertex in vertices {
         let start_index = new_vertices.len() as u32;
         new_vertices.push(SimpleVertex {
             position: [

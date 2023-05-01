@@ -89,6 +89,5 @@ pub fn from_pose(pose: &Pose, color: [f32; 3]) -> Vec<SimpleVertex> {
             });
         }
     }
-    /* dbg!(&points); */
     points
 }
