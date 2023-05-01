@@ -16,6 +16,28 @@ pub mod rendering;
 mod resources;
 pub mod texture;
 
+fn get_delta(
+    previous_time: &mut Instant,
+    delta_accum: &mut Duration,
+    frame_counter: &mut u32,
+) -> f32 {
+    let now = Instant::now();
+    let delta = now - *previous_time;
+    let delta_seconds = delta.as_secs_f32();
+    *delta_accum += delta;
+    *previous_time = now;
+    *frame_counter += 1;
+    if delta_accum.as_secs() > 1 {
+        println!(
+            "FPS: {}",
+            1.0 / (delta_accum.as_secs_f32() / *frame_counter as f32)
+        );
+        *frame_counter = 0;
+        *delta_accum = Duration::ZERO;
+    }
+    delta_seconds
+}
+
 pub fn run(event_loop: EventLoop<()>, mut state: State) {
     env_logger::init();
 
@@ -23,19 +45,6 @@ pub fn run(event_loop: EventLoop<()>, mut state: State) {
     let mut frame_counter = 0;
     let mut delta_accum = Duration::ZERO;
     event_loop.run(move |event, _, control_flow| {
-        let now = Instant::now();
-        let delta = now - previous_time;
-        delta_accum += delta;
-        previous_time = now;
-        frame_counter += 1;
-        if delta_accum.as_secs() > 1 {
-            println!(
-                "FPS: {}",
-                1.0 / (delta_accum.as_secs_f32() / frame_counter as f32)
-            );
-            frame_counter = 0;
-            delta_accum = Duration::ZERO;
-        }
         match event {
             Event::WindowEvent {
                 ref event,
@@ -65,7 +74,8 @@ pub fn run(event_loop: EventLoop<()>, mut state: State) {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                state.update(delta.as_secs_f32() * 1000.0);
+                let delta = get_delta(&mut previous_time, &mut delta_accum, &mut frame_counter);
+                state.update(delta);
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated

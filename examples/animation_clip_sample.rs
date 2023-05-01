@@ -29,7 +29,7 @@ pub fn main() {
     let animation_clips: Vec<Clip> = load_animation_clips(&document, &buffers);
     let current_clip = animation_clips
         .iter()
-        .find(|c| c.name == "Running")
+        .find(|c| c.name == "Walking")
         .unwrap()
         .to_owned();
     let current_pose = rest_pose;

@@ -168,7 +168,5 @@ fn frames_from_channel_vec3(
         };
         frames.push(Frame::new(time, in_tangent, out_tangent, value));
     }
-
-    dbg!(frames.len());
     frames
 }
