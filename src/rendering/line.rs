@@ -127,7 +127,7 @@ impl RenderableT for LineRender {
         false
     }
 
-    fn update(&mut self, delta_time: f32, queue: &Queue) {}
+    fn update(&mut self, _delta_time: f32, _queue: &Queue) {}
 
     fn render<'a, 'b: 'a>(
         &'b mut self,

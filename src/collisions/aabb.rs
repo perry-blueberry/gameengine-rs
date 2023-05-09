@@ -1,6 +1,6 @@
 use cgmath::Vector3;
 
-use crate::rendering::model;
+use crate::rendering::model::{self, ModelVertex};
 
 pub struct AABB {
     min: Vector3<f32>,
@@ -8,7 +8,7 @@ pub struct AABB {
 }
 
 impl AABB {
-    pub fn new(mesh: &model::Mesh) -> Self {
+    pub fn new(mesh: &model::Mesh<ModelVertex>) -> Self {
         let mut min = Vector3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
         let mut max = Vector3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
         for &model::ModelVertex {

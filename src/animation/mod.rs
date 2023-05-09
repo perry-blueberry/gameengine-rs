@@ -4,6 +4,7 @@ pub mod frame;
 pub mod gltf_loader;
 pub mod interpolation;
 pub mod pose;
+pub mod skeleton;
 pub mod track;
 pub mod track_helpers;
 pub mod transform_track;

@@ -5,8 +5,8 @@ use cgmath::{Deg, InnerSpace, Matrix4, Quaternion, Rotation3, Vector3, Zero};
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
 pub struct Instance {
-    position: Vector3<f32>,
-    rotation: Quaternion<f32>,
+    pub position: Vector3<f32>,
+    pub rotation: Quaternion<f32>,
 }
 
 impl Instance {

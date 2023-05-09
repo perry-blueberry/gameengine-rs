@@ -1,8 +1,8 @@
-use cgmath::{Decomposed, Quaternion, Transform as Tf, Vector3};
+use cgmath::{Decomposed, Matrix4, Quaternion, Transform as Tf, Vector3};
 
 pub(crate) type Transform = Decomposed<Vector3<f32>, Quaternion<f32>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Pose {
     joints: Vec<Transform>,
     parents: Vec<Option<usize>>,
@@ -43,7 +43,13 @@ impl Pose {
         res
     }
 
-    pub fn matrix_palette(&self) {}
+    pub fn matrix_palette(&self) -> Vec<Matrix4<f32>> {
+        let mut result = Vec::with_capacity(self.len());
+        for i in 0..self.len() {
+            result.push(self.global_transform(i).into());
+        }
+        result
+    }
 
     pub fn parent(&self, idx: usize) -> Option<usize> {
         self.parents[idx]

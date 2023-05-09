@@ -13,7 +13,7 @@ mod collisions;
 mod instance;
 mod math;
 pub mod rendering;
-mod resources;
+pub mod resources;
 pub mod texture;
 
 fn get_delta(

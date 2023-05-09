@@ -3,7 +3,7 @@ use winit::{dpi::PhysicalSize, event::WindowEvent};
 
 use super::{
     animation_clip_player::AnimationClipPlayer, line::LineRender, model::TriangleModel,
-    point::PointRender,
+    point::PointRender, skeletal_model::SkeletalModel,
 };
 
 pub enum Renderable {
@@ -11,6 +11,7 @@ pub enum Renderable {
     Line(LineRender),
     Point(PointRender),
     AnimationClipPlayer(AnimationClipPlayer),
+    SkeletalModel(SkeletalModel),
 }
 
 impl RenderableT for Renderable {
@@ -20,6 +21,7 @@ impl RenderableT for Renderable {
             Renderable::Line(l) => l.resize(new_size),
             Renderable::Point(p) => p.resize(new_size),
             Renderable::AnimationClipPlayer(a) => a.resize(new_size),
+            Renderable::SkeletalModel(m) => m.resize(new_size),
         }
     }
     fn input(&mut self, event: &WindowEvent) -> bool {
@@ -28,6 +30,7 @@ impl RenderableT for Renderable {
             Renderable::Line(l) => l.input(event),
             Renderable::Point(p) => p.input(event),
             Renderable::AnimationClipPlayer(a) => a.input(event),
+            Renderable::SkeletalModel(m) => m.input(event),
         }
     }
     fn update(&mut self, delta_time: f32, queue: &Queue) {
@@ -36,6 +39,7 @@ impl RenderableT for Renderable {
             Renderable::Line(l) => l.update(delta_time, queue),
             Renderable::Point(p) => p.update(delta_time, queue),
             Renderable::AnimationClipPlayer(a) => a.update(delta_time, queue),
+            Renderable::SkeletalModel(m) => m.update(delta_time, queue),
         }
     }
     fn render<'a, 'b: 'a>(
@@ -47,6 +51,7 @@ impl RenderableT for Renderable {
             Renderable::Line(l) => l.render(render_pass),
             Renderable::Point(p) => p.render(render_pass),
             Renderable::AnimationClipPlayer(a) => a.render(render_pass),
+            Renderable::SkeletalModel(m) => m.render(render_pass),
         }
     }
 }

@@ -45,8 +45,6 @@ pub fn main() {
 }
 
 struct Sample {
-    scalar_tracks: Vec<ScalarTrack>,
-    scalar_tracks_looping: Vec<bool>,
     ref_lines: Vec<SimpleVertex>,
     scalar_track_lines: Vec<SimpleVertex>,
     handle_lines: Vec<SimpleVertex>,
@@ -259,8 +257,6 @@ impl Sample {
         }
 
         Self {
-            scalar_tracks,
-            scalar_tracks_looping,
             ref_lines,
             scalar_track_lines,
             handle_lines,

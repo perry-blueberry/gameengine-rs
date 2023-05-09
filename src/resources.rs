@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::*;
 use cgmath::Vector3;
+use tobj::Model;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindingResource, BufferUsages, Device,
@@ -47,7 +48,7 @@ pub async fn load_model(
     device: &Device,
     queue: &Queue,
     layout: &BindGroupLayout,
-) -> Result<model::Model> {
+) -> Result<model::Model<ModelVertex>> {
     let text = load_string(file_name).await?;
     let cursor = Cursor::new(text);
     let reader = BufReader::new(cursor);
@@ -68,7 +69,7 @@ async fn load_obj_model(
     queue: &Queue,
     layout: &BindGroupLayout,
     mut obj_reader: BufReader<Cursor<String>>,
-) -> Result<model::Model> {
+) -> Result<model::Model<ModelVertex>> {
     let (models, obj_materials) = tobj::load_obj_buf_async(
         &mut obj_reader,
         &tobj::LoadOptions {

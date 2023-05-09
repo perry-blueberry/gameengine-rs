@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{mem::size_of, ops::Range};
 
 use anyhow::Ok;
@@ -7,6 +8,7 @@ use bytemuck::{Pod, Zeroable};
 use cgmath::Vector3;
 use wgpu::util::BufferInitDescriptor;
 use wgpu::util::DeviceExt;
+use wgpu::ShaderModule;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, BufferAddress, BufferBindingType, BufferUsages, ColorWrites,
@@ -57,13 +59,13 @@ impl Vertex for ModelVertex {
 }
 
 #[derive(Debug)]
-pub struct Mesh {
+pub struct Mesh<T: Vertex> {
     pub name: String,
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_elements: u32,
     pub material: usize,
-    pub model_vertices: Vec<ModelVertex>,
+    pub model_vertices: Vec<T>,
     pub positions: Vector3<f32>,
 }
 
@@ -73,75 +75,77 @@ pub struct Material {
     pub bind_group: BindGroup,
 }
 
-pub struct Model {
-    pub meshes: Vec<Mesh>,
+pub struct Model<T: Vertex> {
+    pub meshes: Vec<Mesh<T>>,
     pub materials: Vec<Material>,
 }
 
-pub trait DrawModel<'a> {
+pub trait DrawModel<'a, T: Vertex> {
     fn draw_mesh(
         &mut self,
-        mesh: &'a Mesh,
+        mesh: &'a Mesh<T>,
         material: &'a Material,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: &Vec<(u32, &'a BindGroup)>,
     );
     fn draw_mesh_instanced(
         &mut self,
-        mesh: &'a Mesh,
+        mesh: &'a Mesh<T>,
         material: &'a Material,
         instances: Range<u32>,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: &Vec<(u32, &'a BindGroup)>,
     );
 
-    fn draw_model(&mut self, model: &'a Model, camera_bind_group: &'a BindGroup);
+    fn draw_model(&mut self, model: &'a Model<T>, bind_groups: Vec<(u32, &'a BindGroup)>);
     fn draw_model_instanced(
         &mut self,
-        model: &'a Model,
+        model: &'a Model<T>,
         instances: Range<u32>,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: Vec<(u32, &'a BindGroup)>,
     );
 }
 
-impl<'a, 'b> DrawModel<'b> for RenderPass<'a>
+impl<'a, 'b, T: Vertex> DrawModel<'b, T> for RenderPass<'a>
 where
     'b: 'a,
 {
     fn draw_mesh(
         &mut self,
-        mesh: &'a Mesh,
+        mesh: &'a Mesh<T>,
         material: &'a Material,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: &Vec<(u32, &'a BindGroup)>,
     ) {
-        self.draw_mesh_instanced(mesh, material, 0..1, camera_bind_group);
+        self.draw_mesh_instanced(mesh, material, 0..1, bind_groups);
     }
 
     fn draw_mesh_instanced(
         &mut self,
-        mesh: &'a Mesh,
+        mesh: &'a Mesh<T>,
         material: &'a Material,
         instances: Range<u32>,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: &Vec<(u32, &'a BindGroup)>,
     ) {
         self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
         self.set_index_buffer(mesh.index_buffer.slice(..), IndexFormat::Uint32);
         self.set_bind_group(0, &material.bind_group, &[]);
-        self.set_bind_group(1, camera_bind_group, &[]);
+        for (group_index, bind_group) in bind_groups {
+            self.set_bind_group(*group_index, *bind_group, &[]);
+        }
         self.draw_indexed(0..mesh.num_elements, 0, instances);
     }
 
-    fn draw_model(&mut self, model: &'a Model, camera_bind_group: &'a BindGroup) {
-        self.draw_model_instanced(model, 0..1, camera_bind_group);
+    fn draw_model(&mut self, model: &'a Model<T>, bind_groups: Vec<(u32, &'a BindGroup)>) {
+        self.draw_model_instanced(model, 0..1, bind_groups);
     }
 
     fn draw_model_instanced(
         &mut self,
-        model: &'a Model,
+        model: &'a Model<T>,
         instances: Range<u32>,
-        camera_bind_group: &'a BindGroup,
+        bind_groups: Vec<(u32, &'a BindGroup)>,
     ) {
         for mesh in &model.meshes {
             let material = &model.materials[mesh.material];
-            self.draw_mesh_instanced(mesh, material, instances.clone(), camera_bind_group);
+            self.draw_mesh_instanced(mesh, material, instances.clone(), &bind_groups);
         }
     }
 }
@@ -150,8 +154,112 @@ pub struct TriangleModel {
     render_pipeline: RenderPipeline,
     instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
-    model: Model,
+    model: Model<ModelVertex>,
     camera_bind_group: BindGroup,
+}
+
+pub async fn new_model(
+    model_name: &str,
+    device: &Device,
+    queue: &Queue,
+    config: &SurfaceConfiguration,
+    camera_buffer: &wgpu::Buffer,
+    shader: ShaderModule,
+) -> Result<(
+    RenderPipeline,
+    Vec<Instance>,
+    wgpu::Buffer,
+    Model<ModelVertex>,
+    BindGroup,
+)> {
+    let texture_bind_group_layout = create_texture_bind_group_layout(&device);
+    let model = resources::load_model(model_name, &device, &queue, &texture_bind_group_layout)
+        .await
+        .unwrap();
+
+    let camera_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("camera_bind_group_layout"),
+        entries: &[BindGroupLayoutEntry {
+            binding: 0,
+            count: None,
+            ty: BindingType::Buffer {
+                ty: BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            visibility: ShaderStages::VERTEX,
+        }],
+    });
+    let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
+        label: Some("camera_bind_group"),
+        layout: &camera_bind_group_layout,
+        entries: &[BindGroupEntry {
+            binding: 0,
+            resource: camera_buffer.as_entire_binding(),
+        }],
+    });
+
+    let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render pipeline layout"),
+        bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
+        push_constant_ranges: &[],
+    });
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("Render pipeline"),
+        layout: Some(&render_pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: "vs_main",
+            buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
+        },
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            polygon_mode: wgpu::PolygonMode::Fill,
+            unclipped_depth: false,
+            conservative: false,
+        },
+        depth_stencil: Some(DepthStencilState {
+            format: texture::Texture::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: CompareFunction::Less,
+            stencil: StencilState::default(),
+            bias: DepthBiasState::default(),
+        }),
+        multisample: MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: "fs_main",
+            targets: &[Some(wgpu::ColorTargetState {
+                format: config.format,
+                blend: Some(wgpu::BlendState::REPLACE),
+                write_mask: ColorWrites::all(),
+            })],
+        }),
+        multiview: None,
+    });
+
+    let instances = create_instances();
+
+    let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+    let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some("instance_buffer"),
+        contents: cast_slice(&instance_data),
+        usage: BufferUsages::VERTEX,
+    });
+    Ok((
+        render_pipeline,
+        instances,
+        instance_buffer,
+        model,
+        camera_bind_group,
+    ))
 }
 
 impl TriangleModel {
@@ -162,91 +270,9 @@ impl TriangleModel {
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
     ) -> Result<Self> {
-        let texture_bind_group_layout = create_texture_bind_group_layout(&device);
-        let model = resources::load_model(model_name, &device, &queue, &texture_bind_group_layout)
-            .await
-            .unwrap();
-
-        let camera_bind_group_layout =
-            device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("camera_bind_group_layout"),
-                entries: &[BindGroupLayoutEntry {
-                    binding: 0,
-                    count: None,
-                    ty: BindingType::Buffer {
-                        ty: BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    visibility: ShaderStages::VERTEX,
-                }],
-            });
-        let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: Some("camera_bind_group"),
-            layout: &camera_bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }],
-        });
-
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render pipeline layout"),
-                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
-                push_constant_ranges: &[],
-            });
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: Some(DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: CompareFunction::Less,
-                stencil: StencilState::default(),
-                bias: DepthBiasState::default(),
-            }),
-            multisample: MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: ColorWrites::all(),
-                })],
-            }),
-            multiview: None,
-        });
-
-        let instances = create_instances();
-
-        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("instance_buffer"),
-            contents: cast_slice(&instance_data),
-            usage: BufferUsages::VERTEX,
-        });
-
+        let (render_pipeline, instances, instance_buffer, model, camera_bind_group) =
+            new_model(model_name, device, queue, config, camera_buffer, shader).await?;
         Ok(Self {
             render_pipeline,
             instances,
@@ -275,7 +301,7 @@ impl RenderableT for TriangleModel {
         render_pass.draw_model_instanced(
             &self.model,
             0..self.instances.len() as u32,
-            &self.camera_bind_group,
+            vec![(1, &self.camera_bind_group)],
         );
         std::result::Result::Ok(())
     }

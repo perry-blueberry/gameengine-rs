@@ -1,15 +1,12 @@
-use std::cell::RefCell;
-
 use gameengine_rs::{
     animation::{
         clip::Clip,
         gltf_loader::{load_animation_clips, load_rest_pose},
-        pose::Pose,
     },
     rendering::{
-        animation_clip_player::{self, from_pose, AnimationClipPlayer},
+        animation_clip_player::{from_pose, AnimationClipPlayer},
         line::LineRender,
-        renderable::{Renderable, SimpleVertex, Updatable},
+        renderable::Renderable,
         state::State,
     },
     run, texture,
