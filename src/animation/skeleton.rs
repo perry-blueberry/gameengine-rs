@@ -1,6 +1,6 @@
-use cgmath::{Matrix, Matrix4, Transform};
+use cgmath::{Matrix4, Transform};
 
-use super::pose::{self, Pose};
+use super::pose::Pose;
 
 pub struct Skeleton {
     pub rest_pose: Pose,

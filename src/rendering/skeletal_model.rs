@@ -8,13 +8,13 @@ use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingResource, BindingType, BufferAddress, BufferBindingType,
     BufferUsages, ColorWrites, CompareFunction, DepthBiasState, DepthStencilState, Device,
-    MultisampleState, Queue, RenderPipeline, ShaderStages, StencilState, SurfaceConfiguration,
+    MultisampleState, RenderPipeline, ShaderStages, StencilState, SurfaceConfiguration,
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 
 use crate::{
     animation::{clip::Clip, pose::Pose, skeleton::Skeleton, track::DefaultConstructible},
-    instance::{create_instances, Instance, InstanceRaw},
+    instance::{Instance, InstanceRaw},
     texture::{self, create_texture_bind_group_layout},
 };
 
@@ -97,7 +97,6 @@ impl SkeletalModel {
         indices: Vec<u32>,
         model_name: &str,
         device: &Device,
-        queue: &Queue,
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
         material: Material<'a>,
@@ -180,28 +179,6 @@ impl SkeletalModel {
                 },
             ],
         });
-
-        /* let inv_pose_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            label: Some("inv_pose_bind_group_layout"),
-            entries: &[BindGroupLayoutEntry {
-                binding: 0,
-                count: None,
-                ty: BindingType::Buffer {
-                    ty: BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                visibility: ShaderStages::VERTEX,
-            }],
-        });
-        let inv_pose_bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: Some("inv_pose_bind_group"),
-            layout: &inv_pose_bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: inv_pose_buffer.as_entire_binding(),
-            }],
-        }); */
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {

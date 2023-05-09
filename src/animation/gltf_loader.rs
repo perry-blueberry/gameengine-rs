@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Neg;
 
 use cgmath::{
     InnerSpace, Matrix3, Matrix4, Quaternion, Rotation, SquareMatrix, Transform, Vector3,
@@ -150,14 +149,7 @@ pub fn load_meshes<'a>(
 ) {
     let skin = &data.skins().collect::<Vec<Skin>>()[0];
     let skin_joints: Vec<Node> = skin.joints().collect();
-    /* dbg!(skin_joints.iter().map(|j| j.index()).collect()); */
     let mut vertices = vec![];
-    let reader = skin.reader(|buffer| Some(&buffer_data[buffer.index()]));
-    let inv_bind_matrices: Vec<Matrix4<f32>> = reader
-        .read_inverse_bind_matrices()
-        .unwrap()
-        .map(|m| m.into())
-        .collect();
     for mesh in data.meshes() {
         for primitive in mesh.primitives() {
             let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
@@ -315,7 +307,6 @@ fn matrix_to_quaternion(matrix: &Matrix4<f32>) -> Quaternion<f32> {
     let right = up.cross(forward);
     let up = forward.cross(right);
     Matrix3::look_to_rh(forward, up).into()
-    /* Quaternion::look_at(-forward, up) */
 }
 
 fn matrix_to_decomposed(m: Matrix4<f32>) -> pose::Transform {
@@ -337,32 +328,6 @@ fn matrix_to_decomposed(m: Matrix4<f32>) -> pose::Transform {
     let inv_rot_matrix: Matrix4<f32> = rot.invert().into();
     let scale_skew_matrix = rot_scale_matrix.concat(&inv_rot_matrix);
     let scale = scale_skew_matrix.diagonal().truncate();
-    /* let scale = vec![
-        matrix.x.truncate().magnitude(),
-        matrix.y.truncate().magnitude(),
-        matrix.z.truncate().magnitude(),
-    ];
-    let rotation_matrix = Matrix4::from_nonuniform_scale(scale[0], scale[1], scale[2])
-        .invert()
-        .unwrap()
-        * matrix;
-
-    /* let rot = Quaternion::from([
-        rotation_matrix.x,
-        rotation_matrix.y,
-        rotation_matrix.x,
-        rotation_matrix.w,
-    ]); */
-    let trace = rotation_matrix.trace() - 1.0;
-    let s = (trace / 4.0).sqrt();
-
-    let w = s;
-    let x = (rotation_matrix[2][1] - rotation_matrix[1][2]) / (4.0 * s);
-    let y = (rotation_matrix[0][2] - rotation_matrix[2][0]) / (4.0 * s);
-    let z = (rotation_matrix[1][0] - rotation_matrix[0][1]) / (4.0 * s);
-
-    let rot = Quaternion::new(w, x, y, z);
-    let disp = matrix.w.truncate(); */
     // TODO: Use full scale
     pose::Transform {
         scale: scale[0],

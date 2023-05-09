@@ -33,7 +33,6 @@ pub fn main() {
         indices,
         "Woman.gltf",
         &state.device,
-        &state.queue,
         &state.config,
         &state.camera_persp_buffer,
         material,

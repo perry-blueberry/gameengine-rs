@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::*;
 use cgmath::Vector3;
-use tobj::Model;
+
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindingResource, BufferUsages, Device,
