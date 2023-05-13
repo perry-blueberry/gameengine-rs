@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use cgmath::{Quaternion, Vector3};
+use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
 pub trait ArrayType {
     const LENGTH: usize;
@@ -23,7 +23,7 @@ impl ArrayType for f32 {
     }
 }
 
-impl ArrayType for Vector3<f32> {
+impl ArrayType for Vector3 {
     const LENGTH: usize = 3;
     type Slice = [f32; 3];
 
@@ -40,22 +40,20 @@ impl ArrayType for Vector3<f32> {
     }
 }
 
-impl ArrayType for Quaternion<f32> {
+impl ArrayType for Quaternion {
     const LENGTH: usize = 4;
     type Slice = [f32; 4];
 
     fn from_slice(array: &Self::Slice) -> Self {
         Self {
-            v: Vector3 {
-                x: array[0],
-                y: array[1],
-                z: array[2],
-            },
-            s: array[3],
+            x: array[0],
+            y: array[1],
+            z: array[2],
+            w: array[3],
         }
     }
 
     fn to_slice(&self) -> Self::Slice {
-        [self.v.x, self.v.y, self.v.z, self.s]
+        [self.x, self.y, self.z, self.w]
     }
 }

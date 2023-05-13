@@ -1,6 +1,6 @@
-use cgmath::{Decomposed, Matrix4, Quaternion, Transform as Tf, Vector3};
+use std::borrow::Borrow;
 
-pub(crate) type Transform = Decomposed<Vector3<f32>, Quaternion<f32>>;
+use crate::math::{matrix4::Matrix4, transform::Transform};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pose {
@@ -19,8 +19,8 @@ impl Pose {
         self.joints.len()
     }
 
-    pub fn local_transform(&self, idx: usize) -> Transform {
-        self.joints[idx]
+    pub fn local_transform(&self, idx: usize) -> &Transform {
+        &self.joints[idx]
     }
 
     pub fn set_local_transform(&mut self, idx: usize, tf: Transform) {
@@ -32,21 +32,21 @@ impl Pose {
     }
 
     pub fn global_transform(&self, idx: usize) -> Transform {
-        let mut res = self.joints[idx];
+        let mut res = self.joints[idx].clone();
         if let Some(mut parent_index) = self.parents[idx] {
-            res = self.joints[parent_index].concat(&res);
+            res = self.joints[parent_index].combine(&res);
             while let Some(parent) = self.parents[parent_index] {
                 parent_index = parent;
-                res = self.joints[parent_index].concat(&res);
+                res = self.joints[parent_index].combine(&res);
             }
         }
         res
     }
 
-    pub fn matrix_palette(&self) -> Vec<Matrix4<f32>> {
+    pub fn matrix_palette(&self) -> Vec<Matrix4> {
         let mut result = Vec::with_capacity(self.len());
         for i in 0..self.len() {
-            result.push(self.global_transform(i).into());
+            result.push(self.global_transform(i).borrow().into());
         }
         result
     }

@@ -80,11 +80,11 @@ pub fn from_pose(pose: &Pose, color: [f32; 3]) -> Vec<SimpleVertex> {
     for i in 0..pose.len() {
         if let Some(parent) = pose.parent(i) {
             points.push(SimpleVertex {
-                position: pose.global_transform(i).disp.into(),
+                position: pose.global_transform(i).translation.into(),
                 color,
             });
             points.push(SimpleVertex {
-                position: pose.global_transform(parent).disp.into(),
+                position: pose.global_transform(parent).translation.into(),
                 color,
             });
         }

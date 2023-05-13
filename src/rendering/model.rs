@@ -4,7 +4,6 @@ use anyhow::Ok;
 use anyhow::Result;
 use bytemuck::cast_slice;
 use bytemuck::{Pod, Zeroable};
-use cgmath::Vector3;
 use wgpu::util::BufferInitDescriptor;
 use wgpu::util::DeviceExt;
 use wgpu::ShaderModule;
@@ -18,6 +17,7 @@ use wgpu::{
 
 use crate::instance::create_instances;
 use crate::instance::InstanceRaw;
+use crate::math::vector3::Vector3;
 use crate::texture::create_texture_bind_group_layout;
 use crate::{instance::Instance, rendering::renderable::RenderableT, resources, texture};
 
@@ -65,7 +65,7 @@ pub struct Mesh<T: Vertex> {
     pub num_elements: u32,
     pub material: usize,
     pub model_vertices: Vec<T>,
-    pub positions: Vector3<f32>,
+    pub positions: Vector3,
 }
 
 pub struct Material {

@@ -1,8 +1,6 @@
 use std::ops::Neg;
 
-use cgmath::{InnerSpace, Quaternion, Vector3, VectorSpace};
-
-/* use crate::math::mix; */
+use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
 pub trait Neighborhood {
     fn neighborhood(&self, other: &mut Self);
@@ -12,11 +10,11 @@ impl Neighborhood for f32 {
     fn neighborhood(&self, _other: &mut Self) {}
 }
 
-impl Neighborhood for Vector3<f32> {
+impl Neighborhood for Vector3 {
     fn neighborhood(&self, _other: &mut Self) {}
 }
 
-impl Neighborhood for Quaternion<f32> {
+impl Neighborhood for Quaternion {
     fn neighborhood(&self, other: &mut Self) {
         if self.dot(*other) < 0.0 {
             *other = other.neg();
@@ -34,15 +32,15 @@ impl AdjustHermiteResult for f32 {
     }
 }
 
-impl AdjustHermiteResult for Vector3<f32> {
+impl AdjustHermiteResult for Vector3 {
     fn adjust_hermite_result(&self) -> Self {
         *self
     }
 }
 
-impl AdjustHermiteResult for Quaternion<f32> {
+impl AdjustHermiteResult for Quaternion {
     fn adjust_hermite_result(&self) -> Self {
-        self.normalize()
+        self.normalized()
     }
 }
 
@@ -56,22 +54,21 @@ impl Interpolate for f32 {
     }
 }
 
-impl Interpolate for Vector3<f32> {
+impl Interpolate for Vector3 {
     fn interpolate(&self, other: &Self, t: f32) -> Self {
         self.lerp(*other, t)
     }
 }
 
-impl Interpolate for Quaternion<f32> {
+impl Interpolate for Quaternion {
     fn interpolate(&self, other: &Self, t: f32) -> Self {
-        Self::new(0.0, 9.0, 0.0, 0.0)
-        /* let result = if
+        let result = if
         /*neighborhood */
         self.dot(*other) < 0.0 {
-            mix(self, &-other, t)
+            self.mix(-*other, t)
         } else {
-            mix(self, other, t)
+            self.mix(*other, t)
         };
-        result.normalize() */
+        result.normalized()
     }
 }

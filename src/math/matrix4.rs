@@ -1,11 +1,15 @@
 use std::ops::{Add, Mul, Sub};
 
+use bytemuck::{Pod, Zeroable};
+use num_traits::Zero;
+
 use super::{
     matrix3::Matrix3, quaternion::Quaternion, transform::Transform, vector3::Vector3,
     vector4::Vector4,
 };
 
-#[derive(Debug, PartialEq)]
+#[repr(C)]
+#[derive(Debug, PartialEq, Pod, Clone, Copy, Zeroable)]
 pub struct Matrix4 {
     pub values: [[f32; 4]; 4],
 }
@@ -122,6 +126,79 @@ impl Matrix4 {
         match self.inverse() {
             Some(i) => self.values = i.values,
             None => println!("Failed to invert matrix {:?}", self),
+        }
+    }
+
+    pub fn perspective(fov: f32, aspect: f32, n: f32, f: f32) -> Self {
+        let t = n * f32::tan(fov.to_radians());
+        let b = -t;
+        let r = t * aspect;
+        let l = -r;
+        Self {
+            values: [
+                [(2.0 * n) / (r - l), 0.0, 0.0, 0.0],
+                [0.0, (2.0 * n) / (t - b), 0.0, 0.0],
+                [
+                    (r + l) / (r - l),
+                    (t + b) / (t - b),
+                    (-(f + n)) / (f - n),
+                    -1.0,
+                ],
+                [0.0, 0.0, (-2.0 * f * n) / (f - n), 0.0],
+            ],
+        }
+    }
+
+    pub fn ortho(l: f32, r: f32, b: f32, t: f32, n: f32, f: f32) -> Self {
+        assert_ne!(l, r);
+        assert_ne!(b, t);
+        assert_ne!(n, f);
+        Self {
+            values: [
+                [2.0 / (r - l), 0.0, 0.0, 0.0],
+                [0.0, 2.0 / (t - b), 0.0, 0.0],
+                [0.0, 0.0, -2.0 / (f - n), 0.0],
+                [
+                    -((r + l) / (r - l)),
+                    -((t + b) / (t - b)),
+                    -((f + n) / (f - n)),
+                    1.0,
+                ],
+            ],
+        }
+    }
+
+    pub fn look_at(eye: Vector3, target: Vector3, up: Vector3) -> Option<Self> {
+        let f = -(target - eye).normalized();
+        let mut r = up.cross(f);
+        if r.is_zero() {
+            return None;
+        }
+        r.normalize();
+        let u = f.cross(r).normalized();
+        let t = Vector3 {
+            x: -r.dot(eye),
+            y: -u.dot(eye),
+            z: -f.dot(eye),
+        };
+        Some(Self {
+            values: [
+                [r.x, u.x, f.x, 0.0],
+                [r.y, u.y, f.y, 0.0],
+                [r.z, u.z, f.z, 0.0],
+                [t.x, t.y, t.z, 1.0],
+            ],
+        })
+    }
+
+    pub fn from_translation(v: Vector3) -> Self {
+        Self {
+            values: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [v.x, v.y, v.z, 1.0],
+            ],
         }
     }
 
@@ -319,5 +396,17 @@ impl<'a> From<&'a Transform> for Matrix4 {
         let p = value.translation;
 
         Matrix4::new_vectors(x, y, z, p)
+    }
+}
+
+impl From<[[f32; 4]; 4]> for Matrix4 {
+    fn from(values: [[f32; 4]; 4]) -> Self {
+        Matrix4 { values }
+    }
+}
+
+impl Into<[[f32; 4]; 4]> for Matrix4 {
+    fn into(self) -> [[f32; 4]; 4] {
+        self.values
     }
 }

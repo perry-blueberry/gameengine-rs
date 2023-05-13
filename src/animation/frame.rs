@@ -1,4 +1,5 @@
-use cgmath::{Quaternion, Vector3};
+use crate::math::quaternion::Quaternion;
+use crate::math::vector3::Vector3;
 
 use super::track::DefaultConstructible;
 
@@ -14,8 +15,8 @@ pub struct Frame<A: ArrayType> {
 }
 
 pub type ScalarFrame = Frame<f32>;
-pub type Vector3Frame = Frame<Vector3<f32>>;
-pub type QuatFrame = Frame<Quaternion<f32>>;
+pub type Vector3Frame = Frame<Vector3>;
+pub type QuatFrame = Frame<Quaternion>;
 
 impl<A: ArrayType> Frame<A> {
     pub fn new_simple(time: f32, value: A) -> Frame<A>

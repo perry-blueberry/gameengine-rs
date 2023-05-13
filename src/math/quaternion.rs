@@ -6,10 +6,10 @@ const EPSILON: f32 = 0.000001;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Quaternion {
-    x: f32,
-    y: f32,
-    z: f32,
-    w: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
 }
 
 impl Quaternion {
@@ -23,6 +23,16 @@ impl Quaternion {
             y: v.y,
             z: v.z,
             w: s,
+        }
+    }
+
+    pub fn from_axis_angle(axis: Vector3, angle: f32) -> Self {
+        let s = (angle.to_radians() * 0.5).sin();
+        Self {
+            x: axis.x * s,
+            y: axis.y * s,
+            z: axis.z * s,
+            w: (angle.to_radians() * 0.5).cos(),
         }
     }
 
@@ -257,6 +267,17 @@ impl Neg for Quaternion {
             y: -self.y,
             z: -self.z,
             w: -self.w,
+        }
+    }
+}
+
+impl From<[f32; 4]> for Quaternion {
+    fn from(value: [f32; 4]) -> Self {
+        Self {
+            x: value[0],
+            y: value[1],
+            z: value[2],
+            w: value[3],
         }
     }
 }

@@ -1,6 +1,8 @@
 use std::ops::{Add, Mul};
 
-use cgmath::{num_traits::clamp, Quaternion, Vector3};
+use num_traits::clamp;
+
+use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
 use super::{
     array_type::ArrayType,
@@ -10,8 +12,8 @@ use super::{
 };
 
 pub type ScalarTrack = Track<f32>;
-pub type Vector3Track = Track<Vector3<f32>>;
-pub type QuatTrack = Track<Quaternion<f32>>;
+pub type Vector3Track = Track<Vector3>;
+pub type QuatTrack = Track<Quaternion>;
 
 #[derive(Debug, Clone)]
 pub struct Track<T: ArrayType> {
@@ -206,7 +208,7 @@ impl DefaultConstructible for f32 {
     }
 }
 
-impl DefaultConstructible for Vector3<f32> {
+impl DefaultConstructible for Vector3 {
     fn default() -> Self {
         Self {
             x: Default::default(),
@@ -216,11 +218,13 @@ impl DefaultConstructible for Vector3<f32> {
     }
 }
 
-impl DefaultConstructible for Quaternion<f32> {
+impl DefaultConstructible for Quaternion {
     fn default() -> Self {
         Self {
-            v: DefaultConstructible::default(),
-            s: Default::default(),
+            x: Default::default(),
+            y: Default::default(),
+            z: Default::default(),
+            w: Default::default(),
         }
     }
 }

@@ -1,6 +1,6 @@
-use super::track::{QuatTrack, Vector3Track};
+use crate::math::transform::Transform;
 
-use cgmath::{Decomposed, Quaternion, Vector3};
+use super::track::{QuatTrack, Vector3Track};
 
 #[derive(Clone)]
 pub struct TransformTrack {
@@ -46,21 +46,16 @@ impl TransformTrack {
         .reduce(f32::min)
     }
 
-    pub fn sample(
-        &self,
-        ref_tf: Decomposed<Vector3<f32>, Quaternion<f32>>,
-        t: f32,
-        looping: bool,
-    ) -> Decomposed<Vector3<f32>, Quaternion<f32>> {
+    pub fn sample(&self, ref_tf: Transform, t: f32, looping: bool) -> Transform {
         let mut result = ref_tf;
         if self.position.len() > 1 {
-            result.disp = self.position.sample(t, looping);
+            result.translation = self.position.sample(t, looping);
         }
         if self.rotation.len() > 1 {
-            result.rot = self.rotation.sample(t, looping);
+            result.rotation = self.rotation.sample(t, looping);
         }
         if self.scale.len() > 1 {
-            result.scale = self.scale.sample(t, looping)[0];
+            result.scale = self.scale.sample(t, looping);
         }
         result
     }

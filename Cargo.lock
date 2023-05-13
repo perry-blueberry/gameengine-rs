@@ -65,15 +65,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
-name = "approx"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -222,16 +213,6 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
-name = "cgmath"
-version = "0.18.0"
-source = "git+https://github.com/perry-blueberry/cgmath.git?branch=master#379add1513ba8cdb157a455de778519766043f63"
-dependencies = [
- "approx",
- "bytemuck",
- "num-traits",
-]
 
 [[package]]
 name = "cmake"
@@ -709,7 +690,6 @@ dependencies = [
  "anyhow",
  "base64 0.21.0",
  "bytemuck",
- "cgmath",
  "env_logger",
  "fs_extra",
  "glob",

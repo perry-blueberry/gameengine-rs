@@ -22,7 +22,7 @@ pub fn main() {
     let animation_clips: Vec<Clip> = load_animation_clips(&document, &buffers);
     let current_clip = animation_clips
         .iter()
-        .find(|c| c.name == "Idle")
+        .find(|c| c.name == "Running")
         .unwrap()
         .to_owned();
     let skeleton = load_skeleton(&document, &buffers);

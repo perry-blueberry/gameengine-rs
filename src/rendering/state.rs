@@ -3,9 +3,9 @@ use std::iter;
 use crate::camera::{CameraOrtho, CameraPerspective, CameraUniform};
 use crate::camera_controller::CameraController;
 
+use crate::math::vector3::Vector3;
 use crate::texture;
 use bytemuck::cast_slice;
-use cgmath::Vector3;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BufferUsages, LoadOp, Operations, RenderPassDepthStencilAttachment,
@@ -103,12 +103,12 @@ impl State {
 
         let camera_persp = CameraPerspective {
             aspect: config.width as f32 / config.height as f32,
-            eye: (0.0, 4.0, 7.0).into(),
-            target: (0.0, 4.0, 0.0).into(),
-            fovy: 60.0,
+            eye: [0.0, 4.0, 7.0].into(),
+            target: [0.0, 4.0, 0.0].into(),
+            fovy: 45.0,
             znear: 0.1,
             zfar: 100.0,
-            up: Vector3::unit_y(),
+            up: Vector3::up(),
         };
 
         let camera_persp_controller = CameraController::new(0.02);
@@ -123,9 +123,9 @@ impl State {
         });
 
         let camera_ortho = CameraOrtho {
-            eye: (0.0, 0.0, 5.0).into(),
-            target: (0.0, 0.0, 0.0).into(),
-            up: Vector3::unit_y(),
+            eye: [0.0, 0.0, 5.0].into(),
+            target: [0.0, 0.0, 0.0].into(),
+            up: Vector3::up(),
             left: 0.0,
             right: (config.width as f32 / config.height as f32) * 22.0,
             bottom: 0.0,

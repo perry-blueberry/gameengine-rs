@@ -1,8 +1,8 @@
 use std::mem::size_of;
 
 use bytemuck::{Pod, Zeroable};
-use cgmath::{Matrix4, Quaternion, SquareMatrix, Transform, Vector3};
 use gltf::Material;
+use num_traits::Zero;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
@@ -13,8 +13,9 @@ use wgpu::{
 };
 
 use crate::{
-    animation::{clip::Clip, pose::Pose, skeleton::Skeleton, track::DefaultConstructible},
+    animation::{clip::Clip, pose::Pose, skeleton::Skeleton},
     instance::{Instance, InstanceRaw},
+    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
     texture::{self, create_texture_bind_group_layout},
 };
 
@@ -87,8 +88,6 @@ pub struct SkeletalModel {
     playback_time: f32,
 }
 
-type M4 = Matrix4<f32>;
-
 impl SkeletalModel {
     pub async fn new<'a>(
         vertices: Vec<SkeletalVertex>,
@@ -107,12 +106,12 @@ impl SkeletalModel {
         let shader = device.create_shader_module(wgpu::include_wgsl!("skeletal_model.wgsl"));
         let pose_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("pose_buffer"),
-            contents: bytemuck::cast_slice(&[M4::identity(); 120]),
+            contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
         let inv_pose_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("inv_pose_buffer"),
-            contents: bytemuck::cast_slice(&[M4::identity(); 120]),
+            contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
         let texture_bind_group_layout = create_texture_bind_group_layout(&device);
@@ -233,7 +232,11 @@ impl SkeletalModel {
         });
 
         let instances = vec![Instance {
-            position: Vector3::new(2.0, 0.0, 0.0),
+            position: Vector3 {
+                x: 2.0,
+                y: 0.0,
+                z: 0.0,
+            },
             rotation: Quaternion::default(),
         }];
 
@@ -275,7 +278,7 @@ impl SkeletalModel {
                 num_elements: indices.len() as u32,
                 material: 0,
                 model_vertices: vertices,
-                positions: Vector3::default(),
+                positions: Vector3::zero(),
             }],
             materials: vec![model::Material {
                 name: material.name().unwrap().into(),
@@ -313,25 +316,27 @@ impl SkeletalModel {
             let j = vertex.joints;
             let w = vertex.weights;
 
-            let m0 = pose_palette[j[0] as usize]
-                .concat(&self.skeleton.inverse_bind_pose[j[0] as usize].into())
+            let m0 = &(&pose_palette[j[0] as usize]
+                * &self.skeleton.inverse_bind_pose[j[0] as usize])
                 * w[0];
-            let m1 = pose_palette[j[1] as usize]
-                .concat(&self.skeleton.inverse_bind_pose[j[1] as usize].into())
+            let m1 = &(&pose_palette[j[1] as usize]
+                * &self.skeleton.inverse_bind_pose[j[1] as usize])
                 * w[1];
-            let m2 = pose_palette[j[2] as usize]
-                .concat(&self.skeleton.inverse_bind_pose[j[2] as usize].into())
+            let m2 = &(&pose_palette[j[2] as usize]
+                * &self.skeleton.inverse_bind_pose[j[2] as usize])
                 * w[2];
-            let m3 = pose_palette[j[3] as usize]
-                .concat(&self.skeleton.inverse_bind_pose[j[3] as usize].into())
+            let m3 = &(&pose_palette[j[3] as usize]
+                * &self.skeleton.inverse_bind_pose[j[3] as usize])
                 * w[3];
 
-            let skin = m0 + m1 + m2 + m3;
+            let skin = &(&(&m0 + &m1) + &m2) + &m3;
             vertex.position = skin
                 .transform_point(self.original_positions[i].into())
+                .truncate()
                 .into();
             vertex.normal = skin
                 .transform_vector(self.original_normals[i].into())
+                .truncate()
                 .into();
         }
         queue.write_buffer(

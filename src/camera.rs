@@ -1,13 +1,13 @@
 use bytemuck::{Pod, Zeroable};
-use cgmath::{ortho, perspective, Deg, Matrix4, Point3, SquareMatrix, Vector3};
+
+use crate::math::{matrix4::Matrix4, vector3::Vector3};
 
 #[rustfmt::skip]
-pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 0.5, 0.0,
-    0.0, 0.0, 0.5, 1.0,
-);
+pub const OPENGL_TO_WGPU_MATRIX: Matrix4 = Matrix4{values: [
+    [1.0, 0.0, 0.0, 0.0,],
+    [0.0, 1.0, 0.0, 0.0,],
+    [0.0, 0.0, 0.5, 0.0,],
+    [0.0, 0.0, 0.5, 1.0,]]};
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable)]
@@ -29,17 +29,17 @@ impl CameraUniform {
 }
 
 pub trait Camera {
-    fn build_view_projection_matrix(&self) -> Matrix4<f32>;
-    fn eye(&self) -> Point3<f32>;
-    fn set_eye(&mut self, eye: Point3<f32>);
-    fn target(&self) -> Point3<f32>;
-    fn up(&self) -> Vector3<f32>;
+    fn build_view_projection_matrix(&self) -> Matrix4;
+    fn eye(&self) -> Vector3;
+    fn set_eye(&mut self, eye: Vector3);
+    fn target(&self) -> Vector3;
+    fn up(&self) -> Vector3;
 }
 
 pub struct CameraPerspective {
-    pub eye: Point3<f32>,
-    pub target: Point3<f32>,
-    pub up: Vector3<f32>,
+    pub eye: Vector3,
+    pub target: Vector3,
+    pub up: Vector3,
     pub aspect: f32,
     pub fovy: f32,
     pub znear: f32,
@@ -47,33 +47,36 @@ pub struct CameraPerspective {
 }
 
 impl Camera for CameraPerspective {
-    fn build_view_projection_matrix(&self) -> Matrix4<f32> {
-        let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
-        let proj = perspective(Deg(self.fovy), self.aspect, self.znear, self.zfar);
-        OPENGL_TO_WGPU_MATRIX * proj * view
+    fn build_view_projection_matrix(&self) -> Matrix4 {
+        let view = Matrix4::look_at(self.eye, self.target, self.up).expect(&format!(
+            "Failed to look at: eye {:?}, target {:?}, up {:?}",
+            self.eye, self.target, self.up
+        ));
+        let proj = Matrix4::perspective(self.fovy, self.aspect, self.znear, self.zfar);
+        &(&OPENGL_TO_WGPU_MATRIX * &proj) * &view
     }
 
-    fn eye(&self) -> Point3<f32> {
+    fn eye(&self) -> Vector3 {
         self.eye
     }
 
-    fn target(&self) -> Point3<f32> {
+    fn target(&self) -> Vector3 {
         self.target
     }
 
-    fn set_eye(&mut self, eye: Point3<f32>) {
+    fn set_eye(&mut self, eye: Vector3) {
         self.eye = eye;
     }
 
-    fn up(&self) -> Vector3<f32> {
+    fn up(&self) -> Vector3 {
         self.up
     }
 }
 
 pub struct CameraOrtho {
-    pub eye: Point3<f32>,
-    pub target: Point3<f32>,
-    pub up: Vector3<f32>,
+    pub eye: Vector3,
+    pub target: Vector3,
+    pub up: Vector3,
     pub left: f32,
     pub right: f32,
     pub bottom: f32,
@@ -83,9 +86,12 @@ pub struct CameraOrtho {
 }
 
 impl Camera for CameraOrtho {
-    fn build_view_projection_matrix(&self) -> Matrix4<f32> {
-        let view = Matrix4::look_at_rh(self.eye, self.target, self.up);
-        let proj = ortho(
+    fn build_view_projection_matrix(&self) -> Matrix4 {
+        let view = Matrix4::look_at(self.eye, self.target, self.up).expect(&format!(
+            "Failed to look at: eye {:?}, target {:?}, up {:?}",
+            self.eye, self.target, self.up
+        ));
+        let proj = Matrix4::ortho(
             self.left,
             self.right,
             self.bottom,
@@ -93,22 +99,22 @@ impl Camera for CameraOrtho {
             self.near,
             self.far,
         );
-        OPENGL_TO_WGPU_MATRIX * proj * view
+        &(&OPENGL_TO_WGPU_MATRIX * &proj) * &view
     }
 
-    fn eye(&self) -> Point3<f32> {
+    fn eye(&self) -> Vector3 {
         self.eye
     }
 
-    fn target(&self) -> Point3<f32> {
+    fn target(&self) -> Vector3 {
         self.target
     }
 
-    fn set_eye(&mut self, eye: Point3<f32>) {
+    fn set_eye(&mut self, eye: Vector3) {
         self.eye = eye;
     }
 
-    fn up(&self) -> Vector3<f32> {
+    fn up(&self) -> Vector3 {
         self.up
     }
 }

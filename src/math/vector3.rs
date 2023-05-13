@@ -102,6 +102,10 @@ impl Vector3 {
         Self { x, y, z }
     }
 
+    pub fn magnitude(&self) -> f32 {
+        self.len()
+    }
+
     pub fn add_scaled_vector(&mut self, vector: Vector3, scale: f32) {
         self.x += vector.x * scale;
         self.y += vector.y * scale;
@@ -230,6 +234,12 @@ impl From<[f32; 3]> for Vector3 {
             y: value[1],
             z: value[2],
         }
+    }
+}
+
+impl Into<[f32; 3]> for Vector3 {
+    fn into(self) -> [f32; 3] {
+        [self.x, self.y, self.z]
     }
 }
 

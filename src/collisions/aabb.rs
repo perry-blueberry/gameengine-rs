@@ -1,16 +1,25 @@
-use cgmath::Vector3;
-
-use crate::rendering::model::{self, ModelVertex};
+use crate::{
+    math::vector3::Vector3,
+    rendering::model::{self, ModelVertex},
+};
 
 pub struct AABB {
-    min: Vector3<f32>,
-    max: Vector3<f32>,
+    min: Vector3,
+    max: Vector3,
 }
 
 impl AABB {
     pub fn new(mesh: &model::Mesh<ModelVertex>) -> Self {
-        let mut min = Vector3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
-        let mut max = Vector3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+        let mut min = Vector3 {
+            x: f32::INFINITY,
+            y: f32::INFINITY,
+            z: f32::INFINITY,
+        };
+        let mut max = Vector3 {
+            x: f32::NEG_INFINITY,
+            y: f32::NEG_INFINITY,
+            z: f32::NEG_INFINITY,
+        };
         for &model::ModelVertex {
             position,
             tex_coords: _,

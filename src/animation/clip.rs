@@ -1,4 +1,4 @@
-use cgmath::num_traits::clamp;
+use num_traits::clamp;
 
 use super::{pose::Pose, track::loop_time, transform_track::TransformTrack};
 
@@ -30,7 +30,7 @@ impl Clip {
         for track in &self.tracks {
             let joint = track.id as usize;
             let local = out_pose.local_transform(joint);
-            let animated = track.sample(local, time, self.looping);
+            let animated = track.sample(local.clone(), time, self.looping);
             out_pose.set_local_transform(joint, animated);
         }
         time

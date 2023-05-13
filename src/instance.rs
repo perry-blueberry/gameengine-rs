@@ -1,18 +1,21 @@
 use std::mem::size_of;
 
 use bytemuck::{Pod, Zeroable};
-use cgmath::{Deg, InnerSpace, Matrix4, Quaternion, Rotation3, Vector3, Zero};
+use num_traits::Zero;
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
+use crate::math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3};
+
 pub struct Instance {
-    pub position: Vector3<f32>,
-    pub rotation: Quaternion<f32>,
+    pub position: Vector3,
+    pub rotation: Quaternion,
 }
 
 impl Instance {
     pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
-            model: (Matrix4::from_translation(self.position) * Matrix4::from(self.rotation)).into(),
+            model: (&Matrix4::from_translation(self.position) * &Matrix4::from(self.rotation))
+                .into(),
         }
     }
 }
@@ -66,9 +69,16 @@ pub fn create_instances() -> Vec<Instance> {
                 let position = Vector3 { x, y: 0.0, z };
 
                 let rotation = if position.is_zero() {
-                    Quaternion::from_axis_angle(Vector3::unit_z(), Deg(0.0))
+                    Quaternion::from_axis_angle(
+                        Vector3 {
+                            x: 0.0,
+                            y: 0.0,
+                            z: 1.0,
+                        },
+                        0.0,
+                    )
                 } else {
-                    Quaternion::from_axis_angle(position.normalize(), Deg(45.0))
+                    Quaternion::from_axis_angle(position.normalized(), 45.0)
                 };
 
                 Instance { position, rotation }

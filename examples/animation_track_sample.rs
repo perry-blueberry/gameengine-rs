@@ -1,6 +1,6 @@
-use cgmath::{InnerSpace, Vector3};
 use gameengine_rs::{
     animation::{frame::ScalarFrame, interpolation::Interpolation, track::ScalarTrack},
+    math::vector3::Vector3,
     rendering::{
         line::LineRender,
         point::PointRender,
@@ -220,9 +220,17 @@ impl Sample {
                             * height;
                     let prev_x = left + (this_time - 0.0005) * x_range;
 
-                    let this_vec = Vector3::new(this_x, this_y, 0.6);
-                    let prev_vec = Vector3::new(prev_x, prev_y, 0.6);
-                    let handle_vec = this_vec + (prev_vec - this_vec).normalize() * 0.75;
+                    let this_vec = Vector3 {
+                        x: this_x,
+                        y: this_y,
+                        z: 0.6,
+                    };
+                    let prev_vec = Vector3 {
+                        x: prev_x,
+                        y: prev_y,
+                        z: 0.6,
+                    };
+                    let handle_vec = this_vec + (prev_vec - this_vec).normalized() * 0.75;
 
                     handle_lines.push(SimpleVertex {
                         position: [this_vec.x, this_vec.y, this_vec.z],
@@ -240,9 +248,17 @@ impl Sample {
                             * height;
                     let next_x = left + (this_time + 0.0005) * x_range;
 
-                    let this_vec = Vector3::new(this_x, this_y, 0.6);
-                    let next_vec = Vector3::new(next_x, next_y, 0.6);
-                    let handle_vec = this_vec + (next_vec - this_vec).normalize() * 0.75;
+                    let this_vec = Vector3 {
+                        x: this_x,
+                        y: this_y,
+                        z: 0.6,
+                    };
+                    let next_vec = Vector3 {
+                        x: next_x,
+                        y: next_y,
+                        z: 0.6,
+                    };
+                    let handle_vec = this_vec + (next_vec - this_vec).normalized() * 0.75;
 
                     handle_lines.push(SimpleVertex {
                         position: [this_vec.x, this_vec.y, this_vec.z],

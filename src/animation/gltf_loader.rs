@@ -1,23 +1,21 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 
-use cgmath::{
-    InnerSpace, Matrix3, Matrix4, Quaternion, Rotation, SquareMatrix, Transform, Vector3,
-};
 use gltf::animation::util::ReadOutputs;
 use gltf::{animation::Channel, buffer::Data, Document};
 use gltf::{Material, Node, Skin};
+use num_traits::Zero;
 
+use crate::math::matrix4::Matrix4;
+use crate::math::quaternion::Quaternion;
+use crate::math::transform::Transform;
+use crate::math::vector3::Vector3;
 use crate::rendering::skeletal_model::SkeletalVertex;
 
-use super::pose;
 use super::skeleton::Skeleton;
 use super::{
-    array_type::ArrayType,
-    clip::Clip,
-    frame::Frame,
-    interpolation::Interpolation,
-    pose::Pose,
-    track::{DefaultConstructible, Track},
+    array_type::ArrayType, clip::Clip, frame::Frame, interpolation::Interpolation, pose::Pose,
+    track::Track,
 };
 
 pub fn load_skeleton(data: &Document, buffer_data: &Vec<Data>) -> Skeleton {
@@ -38,10 +36,10 @@ pub fn load_rest_pose(data: &Document) -> Pose {
                 translation,
                 rotation,
                 scale,
-            } => pose::Transform {
-                scale: scale[0],
-                rot: rotation.into(),
-                disp: translation.into(),
+            } => Transform {
+                translation: translation.into(),
+                rotation: rotation.into(),
+                scale: scale.into(),
             },
         };
         result.add_local_transform(transform);
@@ -65,21 +63,16 @@ pub fn load_bind_pose(data: &Document, buffer_data: &Vec<Data>) -> Pose {
             .collect();
         for (i, joint) in skin.joints().enumerate() {
             // It's already an inverse so the inverse exists
-            let bind_matrix = Matrix4::from(inverse_bind_accessor[i])
-                .inverse_transform()
-                .unwrap();
-            world_bind_pose[joint.index()] = matrix_to_decomposed(bind_matrix);
+            let bind_matrix = Matrix4::from(inverse_bind_accessor[i]).inverse().unwrap();
+            world_bind_pose[joint.index()] = bind_matrix.borrow().into();
         }
     }
-    let mut bind_pose = rest_pose;
+    let mut bind_pose = rest_pose.clone();
     for (i, current) in world_bind_pose.iter().enumerate() {
         let mut current = current.to_owned();
         if let Some(parent) = bind_pose.parent(i) {
-            let parent_transform = world_bind_pose[parent];
-            current = parent_transform
-                .inverse_transform()
-                .unwrap()
-                .concat(&current);
+            let parent_transform = &world_bind_pose[parent];
+            current = parent_transform.inverse().combine(&current);
         }
         bind_pose.set_local_transform(i, current);
     }
@@ -216,13 +209,10 @@ pub fn load_meshes<'a>(
     panic!("GLTF didn't have any primitives");
 }
 
-type V3 = Vector3<f32>;
-type Q = Quaternion<f32>;
-
 pub enum TransformComponentVec {
-    Translation(Vec<Frame<Vector3<f32>>>),
-    Rotation(Vec<Frame<Quaternion<f32>>>),
-    Scale(Vec<Frame<Vector3<f32>>>),
+    Translation(Vec<Frame<Vector3>>),
+    Rotation(Vec<Frame<Quaternion>>),
+    Scale(Vec<Frame<Vector3>>),
 }
 
 fn frames_from_channel(
@@ -260,14 +250,17 @@ fn frames_from_channel(
                 let time = timeline_floats[i];
                 //TODO: Decide how last value should be handled
                 let value = if let Some(value) = fs.get(i + 1) {
-                    Q::from_slice(value)
+                    Quaternion::from_slice(value)
                 } else {
-                    Q::from_slice(&fs[0])
+                    Quaternion::from_slice(&fs[0])
                 };
                 let (in_tangent, out_tangent) = if is_sampler_cubic {
-                    (Q::from_slice(&fs[i]), Q::from_slice(&fs[i + 2]))
+                    (
+                        Quaternion::from_slice(&fs[i]),
+                        Quaternion::from_slice(&fs[i + 2]),
+                    )
                 } else {
-                    (Q::default(), Q::default())
+                    (Quaternion::default(), Quaternion::default())
                 };
                 frames.push(Frame::new(time, in_tangent, out_tangent, value));
             }
@@ -281,57 +274,22 @@ fn frames_from_channel_vec3(
     timeline_floats: Vec<f32>,
     fs: Vec<[f32; 3]>,
     is_sampler_cubic: bool,
-) -> Vec<Frame<Vector3<f32>>> {
+) -> Vec<Frame<Vector3>> {
     let mut frames = vec![];
     for i in 0..timeline_floats.len() {
         let time = timeline_floats[i];
         //TODO: Decide how last value should be handled
         let value = if let Some(value) = fs.get(i + 1) {
-            V3::from_slice(value)
+            Vector3::from_slice(value)
         } else {
-            V3::from_slice(&fs[0])
+            Vector3::from_slice(&fs[0])
         };
         let (in_tangent, out_tangent) = if is_sampler_cubic {
-            (V3::from_slice(&fs[i]), V3::from_slice(&fs[i + 2]))
+            (Vector3::from_slice(&fs[i]), Vector3::from_slice(&fs[i + 2]))
         } else {
-            (V3::default(), V3::default())
+            (Vector3::zero(), Vector3::zero())
         };
         frames.push(Frame::new(time, in_tangent, out_tangent, value));
     }
     frames
-}
-
-fn matrix_to_quaternion(matrix: &Matrix4<f32>) -> Quaternion<f32> {
-    let up = matrix.y.truncate().normalize();
-    let forward = matrix.z.truncate().normalize();
-    let right = up.cross(forward);
-    let up = forward.cross(right);
-    Matrix3::look_to_rh(forward, up).into()
-}
-
-fn matrix_to_decomposed(m: Matrix4<f32>) -> pose::Transform {
-    let disp = Vector3 {
-        x: m.w.x,
-        y: m.w.y,
-        z: m.w.z,
-    };
-    let rot = {
-        let rot = matrix_to_quaternion(&m);
-        // TODO: Figure out why z has to be inverted
-        Quaternion::new(rot.s, rot.v.x, rot.v.y, -rot.v.z)
-    };
-
-    let rot_scale_matrix = Matrix4::new(
-        m.x.x, m.x.y, m.x.z, 0.0, m.y.x, m.y.y, m.y.z, 0.0, m.z.x, m.z.y, m.z.z, 0.0, 0.0, 0.0,
-        0.0, 1.0,
-    );
-    let inv_rot_matrix: Matrix4<f32> = rot.invert().into();
-    let scale_skew_matrix = rot_scale_matrix.concat(&inv_rot_matrix);
-    let scale = scale_skew_matrix.diagonal().truncate();
-    // TODO: Use full scale
-    pose::Transform {
-        scale: scale[0],
-        rot,
-        disp,
-    }
 }

@@ -30,7 +30,6 @@ pub fn main() {
         .unwrap()
         .to_owned();
     let current_pose = rest_pose;
-    let current_pose_lines = from_pose(&current_pose, [0.0, 1.0, 0.0]);
     let mut state = pollster::block_on(State::new(window));
     let animation_clip_player = AnimationClipPlayer::new(
         current_clip,
@@ -53,7 +52,7 @@ pub fn main() {
         }),
     );
 
-    /* state.add_renderable(Renderable::Line(line_render)); */
+    state.add_renderable(Renderable::Line(line_render));
     state.add_renderable(Renderable::AnimationClipPlayer(animation_clip_player));
     run(event_loop, state);
 }

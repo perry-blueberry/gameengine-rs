@@ -1,6 +1,6 @@
 use super::{quaternion::Quaternion, vector3::Vector3};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Transform {
     pub translation: Vector3,
     pub rotation: Quaternion,

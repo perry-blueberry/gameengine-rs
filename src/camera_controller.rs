@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use winit::event::{self, ElementState, KeyboardInput, WindowEvent};
 
 use crate::camera::Camera;
@@ -49,7 +48,7 @@ impl CameraController {
 
     pub fn update_camera<C: Camera>(&self, camera: &mut C) {
         let forward = camera.target() - camera.eye();
-        let forward_norm = forward.normalize();
+        let forward_norm = forward.normalized();
         let forward_mag = forward.magnitude();
 
         if self.is_forward_pressed && forward_mag > self.speed {
@@ -65,12 +64,12 @@ impl CameraController {
 
         if self.is_right_pressed {
             camera.set_eye(
-                camera.target() - (forward + right * self.speed).normalize() * forward_mag,
+                camera.target() - (forward + right * self.speed).normalized() * forward_mag,
             );
         }
         if self.is_left_pressed {
             camera.set_eye(
-                camera.target() - (forward - right * self.speed).normalize() * forward_mag,
+                camera.target() - (forward - right * self.speed).normalized() * forward_mag,
             );
         }
     }
