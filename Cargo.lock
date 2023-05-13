@@ -226,7 +226,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "cgmath"
 version = "0.18.0"
-source = "git+https://github.com/perry-blueberry/cgmath.git?branch=master#2de98dde6bae1cec47ac043db7c1756a8fadeb03"
+source = "git+https://github.com/perry-blueberry/cgmath.git?branch=master#379add1513ba8cdb157a455de778519766043f63"
 dependencies = [
  "approx",
  "bytemuck",
@@ -716,6 +716,7 @@ dependencies = [
  "gltf",
  "image",
  "log",
+ "num-traits",
  "percent-encoding",
  "pollster",
  "tobj",

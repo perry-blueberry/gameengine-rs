@@ -11,7 +11,7 @@ pub mod camera;
 mod camera_controller;
 mod collisions;
 mod instance;
-mod math;
+pub mod math;
 pub mod rendering;
 pub mod resources;
 pub mod texture;

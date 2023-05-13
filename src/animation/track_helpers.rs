@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use cgmath::{InnerSpace, Quaternion, Vector3, VectorSpace};
 
-use crate::math::mix;
+/* use crate::math::mix; */
 
 pub trait Neighborhood {
     fn neighborhood(&self, other: &mut Self);
@@ -64,13 +64,14 @@ impl Interpolate for Vector3<f32> {
 
 impl Interpolate for Quaternion<f32> {
     fn interpolate(&self, other: &Self, t: f32) -> Self {
-        let result = if
+        Self::new(0.0, 9.0, 0.0, 0.0)
+        /* let result = if
         /*neighborhood */
         self.dot(*other) < 0.0 {
             mix(self, &-other, t)
         } else {
             mix(self, other, t)
         };
-        result.normalize()
+        result.normalize() */
     }
 }

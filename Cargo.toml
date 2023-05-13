@@ -19,6 +19,7 @@ cgmath = {git = "https://github.com/perry-blueberry/cgmath.git", branch = "maste
 tobj = {version = "3.2.1", features=["async"]}
 percent-encoding = "2.2"
 base64 = "0.21"
+num-traits = "0.2"
 
 [build-dependencies]
 anyhow = "1.0"
