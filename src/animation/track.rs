@@ -28,7 +28,7 @@ where
         + Copy
         + Mul<f32, Output = T>
         + Add<Output = T>
-        + DefaultConstructible
+        + Default
         + ArrayType
         + Interpolate,
 {
@@ -196,35 +196,4 @@ pub fn loop_time(mut t: f32, start_time: f32, end_time: f32) -> f32 {
         t += duration;
     }
     t + start_time
-}
-
-pub trait DefaultConstructible {
-    fn default() -> Self;
-}
-
-impl DefaultConstructible for f32 {
-    fn default() -> Self {
-        Default::default()
-    }
-}
-
-impl DefaultConstructible for Vector3 {
-    fn default() -> Self {
-        Self {
-            x: Default::default(),
-            y: Default::default(),
-            z: Default::default(),
-        }
-    }
-}
-
-impl DefaultConstructible for Quaternion {
-    fn default() -> Self {
-        Self {
-            x: Default::default(),
-            y: Default::default(),
-            z: Default::default(),
-            w: Default::default(),
-        }
-    }
 }

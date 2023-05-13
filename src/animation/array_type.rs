@@ -28,11 +28,7 @@ impl ArrayType for Vector3 {
     type Slice = [f32; 3];
 
     fn from_slice(array: &Self::Slice) -> Self {
-        Self {
-            x: array[0],
-            y: array[1],
-            z: array[2],
-        }
+        Vector3::from(*array)
     }
 
     fn to_slice(&self) -> Self::Slice {
@@ -45,12 +41,7 @@ impl ArrayType for Quaternion {
     type Slice = [f32; 4];
 
     fn from_slice(array: &Self::Slice) -> Self {
-        Self {
-            x: array[0],
-            y: array[1],
-            z: array[2],
-            w: array[3],
-        }
+        Quaternion::from(*array)
     }
 
     fn to_slice(&self) -> Self::Slice {

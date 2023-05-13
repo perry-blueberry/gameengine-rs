@@ -254,3 +254,9 @@ impl Neg for Vector3 {
         }
     }
 }
+
+impl Default for Vector3 {
+    fn default() -> Self {
+        Self::zero()
+    }
+}
