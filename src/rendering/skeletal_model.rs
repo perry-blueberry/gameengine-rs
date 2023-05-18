@@ -303,6 +303,10 @@ impl SkeletalModel {
             playback_time: 0.0,
         })
     }
+
+    //FIXME: This function is bugging out for some reason
+    // It looks like there are float rounding errors for each step which propagate to a big error in the end
+    // The error seems to be too big to just be due to rounding errors but I haven't been able to locate another root cause
     pub fn cpu_skin(&mut self, delta_time: f32, queue: &wgpu::Queue) {
         if self.model.meshes.is_empty() {
             return;
