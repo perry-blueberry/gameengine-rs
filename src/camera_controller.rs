@@ -46,16 +46,18 @@ impl CameraController {
         }
     }
 
-    pub fn update_camera<C: Camera>(&self, camera: &mut C) {
+    pub fn update_camera<C: Camera>(&self, camera: &mut C, delta_time: f32) {
         let forward = camera.target() - camera.eye();
         let forward_norm = forward.normalized();
         let forward_mag = forward.magnitude();
 
-        if self.is_forward_pressed && forward_mag > self.speed {
-            camera.set_eye(camera.eye() + forward_norm * self.speed);
+        let speed = self.speed * delta_time;
+
+        if self.is_forward_pressed && forward_mag > speed {
+            camera.set_eye(camera.eye() + forward_norm * speed);
         }
         if self.is_backward_pressed {
-            camera.set_eye(camera.eye() - forward_norm * self.speed);
+            camera.set_eye(camera.eye() - forward_norm * speed);
         }
 
         let right = forward_norm.cross(camera.up());
@@ -63,14 +65,10 @@ impl CameraController {
         let forward_mag = forward.magnitude();
 
         if self.is_right_pressed {
-            camera.set_eye(
-                camera.target() - (forward + right * self.speed).normalized() * forward_mag,
-            );
+            camera.set_eye(camera.target() - (forward + right * speed).normalized() * forward_mag);
         }
         if self.is_left_pressed {
-            camera.set_eye(
-                camera.target() - (forward - right * self.speed).normalized() * forward_mag,
-            );
+            camera.set_eye(camera.target() - (forward - right * speed).normalized() * forward_mag);
         }
     }
 }

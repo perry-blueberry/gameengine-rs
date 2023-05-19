@@ -45,19 +45,25 @@ impl Pose {
 
     pub fn matrix_palette(&self) -> Vec<Mat4> {
         let mut result = vec![Mat4::IDENTITY; self.len()];
-        for i in 0..self.len() {
-            let parent_index = self.parent(i);
-            if parent_index.is_some() && parent_index.unwrap() > i {
+        let mut i = 0;
+
+        // A "cache" if parents are stored before children
+        for j in i..self.len() {
+            let parent_index = self.parent(j);
+            if parent_index.is_some() && parent_index.unwrap() > j {
                 break;
             }
-            let mut global: Mat4 = self.joints[i].clone().into();
+            let mut global: Mat4 = self.joints[j].clone().into();
             if let Some(parent_index) = parent_index {
                 global = result[parent_index] * global;
             }
-            result[i] = global;
+            result[j] = global;
+            i = j;
         }
-        for i in 0..self.len() {
-            result[i] = self.global_transform(i).into();
+        // Fallback to calculating the global transform for the rest
+        for j in i..self.len() {
+            result[j] = self.global_transform(j).into();
+            i = j;
         }
         result
     }

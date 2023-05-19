@@ -111,7 +111,7 @@ impl State {
             up: Vector3::up(),
         };
 
-        let camera_persp_controller = CameraController::new(0.02);
+        let camera_persp_controller = CameraController::new(5.0);
 
         let mut camera_persp_uniform: CameraUniform = CameraUniform::new();
         camera_persp_uniform.update_view_proj(&camera_persp);
@@ -192,7 +192,7 @@ impl State {
 
     pub fn update(&mut self, delta_time: f32) {
         self.camera_persp_controller
-            .update_camera(&mut self.camera_persp);
+            .update_camera(&mut self.camera_persp, delta_time);
         self.camera_persp_uniform
             .update_view_proj(&self.camera_persp);
         self.queue.write_buffer(
