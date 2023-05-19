@@ -44,9 +44,20 @@ impl Pose {
     }
 
     pub fn matrix_palette(&self) -> Vec<Mat4> {
-        let mut result = Vec::with_capacity(self.len());
+        let mut result = vec![Mat4::IDENTITY; self.len()];
         for i in 0..self.len() {
-            result.push(self.global_transform(i).into());
+            let parent_index = self.parent(i);
+            if parent_index.is_some() && parent_index.unwrap() > i {
+                break;
+            }
+            let mut global: Mat4 = self.joints[i].clone().into();
+            if let Some(parent_index) = parent_index {
+                global = result[parent_index] * global;
+            }
+            result[i] = global;
+        }
+        for i in 0..self.len() {
+            result[i] = self.global_transform(i).into();
         }
         result
     }

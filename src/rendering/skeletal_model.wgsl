@@ -17,10 +17,7 @@ struct Pose {
 }
 
 @group(2) @binding(0)
-var<uniform> pose: Pose;
-
-@group(2) @binding(1)
-var<uniform> inv_bind_pose: Pose;
+var<uniform> animated_pose: Pose;
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -37,10 +34,10 @@ struct VertexOutput {
 
 @vertex
 fn vs_main(model: VertexInput, instance: InstanceInput) -> VertexOutput {
-    var skin: mat4x4<f32> = (pose.data[model.joints.x] * inv_bind_pose.data[model.joints.x]) * model.weights.x;
-    skin = skin + (pose.data[model.joints.y] * inv_bind_pose.data[model.joints.y]) * model.weights.y;
-    skin = skin + (pose.data[model.joints.z] * inv_bind_pose.data[model.joints.z]) * model.weights.z;
-    skin = skin + (pose.data[model.joints.w] * inv_bind_pose.data[model.joints.w]) * model.weights.w;
+    var skin: mat4x4<f32> = animated_pose.data[model.joints.x] * model.weights.x
+                            + animated_pose.data[model.joints.y] * model.weights.y
+                            + animated_pose.data[model.joints.z] * model.weights.z
+                            + animated_pose.data[model.joints.w] * model.weights.w;
     let model_matrix = mat4x4<f32>(instance.model_matrix0,
                                    instance.model_matrix1,
                                    instance.model_matrix2,

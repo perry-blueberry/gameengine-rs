@@ -1,6 +1,7 @@
 use std::mem::size_of;
 
 use bytemuck::{Pod, Zeroable};
+use glam::Mat4;
 use gltf::Material;
 use num_traits::Zero;
 use wgpu::{
@@ -80,8 +81,7 @@ pub struct SkeletalModel {
     original_positions: Vec<[f32; 3]>,
     original_normals: Vec<[f32; 3]>,
     instance_buffer: wgpu::Buffer,
-    pose_buffer: wgpu::Buffer,
-    inv_pose_buffer: wgpu::Buffer,
+    animated_buffer: wgpu::Buffer,
     animated_pose: Pose,
     clip: Clip,
     skeleton: Skeleton,
@@ -104,13 +104,8 @@ impl SkeletalModel {
         skeleton: Skeleton,
     ) -> Result<SkeletalModel> {
         let shader = device.create_shader_module(wgpu::include_wgsl!("skeletal_model.wgsl"));
-        let pose_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("pose_buffer"),
-            contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        });
-        let inv_pose_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("inv_pose_buffer"),
+        let animated_buffer = device.create_buffer_init(&BufferInitDescriptor {
+            label: Some("animated_buffer"),
             contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
         });
@@ -141,42 +136,24 @@ impl SkeletalModel {
 
         let pose_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
             label: Some("pose_bind_group_layout"),
-            entries: &[
-                BindGroupLayoutEntry {
-                    binding: 0,
-                    count: None,
-                    ty: BindingType::Buffer {
-                        ty: BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    visibility: ShaderStages::VERTEX,
+            entries: &[BindGroupLayoutEntry {
+                binding: 0,
+                count: None,
+                ty: BindingType::Buffer {
+                    ty: BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
                 },
-                BindGroupLayoutEntry {
-                    binding: 1,
-                    count: None,
-                    ty: BindingType::Buffer {
-                        ty: BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    visibility: ShaderStages::VERTEX,
-                },
-            ],
+                visibility: ShaderStages::VERTEX,
+            }],
         });
         let pose_bind_group = device.create_bind_group(&BindGroupDescriptor {
             label: Some("pose_bind_group"),
             layout: &pose_bind_group_layout,
-            entries: &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: pose_buffer.as_entire_binding(),
-                },
-                BindGroupEntry {
-                    binding: 1,
-                    resource: inv_pose_buffer.as_entire_binding(),
-                },
-            ],
+            entries: &[BindGroupEntry {
+                binding: 0,
+                resource: animated_buffer.as_entire_binding(),
+            }],
         });
 
         let render_pipeline_layout =
@@ -186,7 +163,6 @@ impl SkeletalModel {
                     &texture_bind_group_layout,
                     &camera_bind_group_layout,
                     &pose_bind_group_layout,
-                    /* &inv_pose_bind_group_layout, */
                 ],
                 push_constant_ranges: &[],
             });
@@ -295,8 +271,7 @@ impl SkeletalModel {
             original_positions,
             original_normals,
             instance_buffer,
-            pose_buffer,
-            inv_pose_buffer,
+            animated_buffer,
             animated_pose: skeleton.rest_pose.clone(),
             clip,
             skeleton,
@@ -304,9 +279,6 @@ impl SkeletalModel {
         })
     }
 
-    //FIXME: This function is bugging out for some reason
-    // It looks like there are float rounding errors for each step which propagate to a big error in the end
-    // The error seems to be too big to just be due to rounding errors but I haven't been able to locate another root cause
     pub fn cpu_skin(&mut self, delta_time: f32, queue: &wgpu::Queue) {
         if self.model.meshes.is_empty() {
             return;
@@ -347,12 +319,14 @@ impl SkeletalModel {
     fn gpu_skin(&mut self, delta_time: f32, queue: &wgpu::Queue) {
         let time = self.playback_time + delta_time;
         self.playback_time = self.clip.sample(&mut self.animated_pose, time);
-        let pose_palette = self.animated_pose.matrix_palette();
-        queue.write_buffer(&self.pose_buffer, 0, bytemuck::cast_slice(&pose_palette));
+        let mut pose_palette: Vec<Mat4> = self.animated_pose.matrix_palette();
+        for (i, p) in pose_palette.iter_mut().enumerate() {
+            *p = *p * self.skeleton.inverse_bind_pose()[i];
+        }
         queue.write_buffer(
-            &self.inv_pose_buffer,
+            &self.animated_buffer,
             0,
-            bytemuck::cast_slice(self.skeleton.inverse_bind_pose()),
+            bytemuck::cast_slice(&pose_palette),
         );
     }
 }
