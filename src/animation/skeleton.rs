@@ -1,6 +1,4 @@
-use std::borrow::Borrow;
-
-use crate::math::matrix4::Matrix4;
+use glam::Mat4;
 
 use super::pose::Pose;
 
@@ -8,7 +6,7 @@ pub struct Skeleton {
     pub rest_pose: Pose,
     pub bind_pose: Pose,
     joint_names: Vec<String>,
-    pub inverse_bind_pose: Vec<Matrix4>,
+    pub inverse_bind_pose: Vec<Mat4>,
 }
 
 impl Skeleton {
@@ -27,7 +25,7 @@ impl Skeleton {
         &self.joint_names[idx]
     }
 
-    pub fn inverse_bind_pose(&self) -> &Vec<Matrix4> {
+    pub fn inverse_bind_pose(&self) -> &Vec<Mat4> {
         &self.inverse_bind_pose
     }
 
@@ -39,7 +37,6 @@ impl Skeleton {
             self.inverse_bind_pose.push(
                 world
                     .inverse()
-                    .borrow()
                     /* .expect(&format!("Failed to inverse world {:?}", world)) */
                     .into(),
             );

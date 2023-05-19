@@ -1,22 +1,15 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
+use glam::{Mat4, Quat, Vec3};
 use gltf::animation::util::ReadOutputs;
 use gltf::{animation::Channel, buffer::Data, Document};
 use gltf::{Material, Node, Skin};
-use num_traits::Zero;
 
-use crate::math::matrix4::Matrix4;
-use crate::math::quaternion::Quaternion;
-use crate::math::transform::Transform;
-use crate::math::vector3::Vector3;
+use crate::math::glam_transform::Transform;
 use crate::rendering::skeletal_model::SkeletalVertex;
 
 use super::skeleton::Skeleton;
-use super::{
-    array_type::ArrayType, clip::Clip, frame::Frame, interpolation::Interpolation, pose::Pose,
-    track::Track,
-};
+use super::{clip::Clip, frame::Frame, interpolation::Interpolation, pose::Pose, track::Track};
 
 pub fn load_skeleton(data: &Document, buffer_data: &Vec<Data>) -> Skeleton {
     Skeleton::new(
@@ -38,7 +31,7 @@ pub fn load_rest_pose(data: &Document) -> Pose {
                 scale,
             } => Transform {
                 translation: translation.into(),
-                rotation: rotation.into(),
+                rotation: Quat::from_array(rotation),
                 scale: scale.into(),
             },
         };
@@ -63,8 +56,8 @@ pub fn load_bind_pose(data: &Document, buffer_data: &Vec<Data>) -> Pose {
             .collect();
         for (i, joint) in skin.joints().enumerate() {
             // It's already an inverse so the inverse exists
-            let bind_matrix = Matrix4::from(inverse_bind_accessor[i]).inverse().unwrap();
-            world_bind_pose[joint.index()] = bind_matrix.borrow().into();
+            let bind_matrix = Mat4::from_cols_array_2d(&inverse_bind_accessor[i]).inverse();
+            world_bind_pose[joint.index()] = bind_matrix.into();
         }
     }
     let mut bind_pose = rest_pose.clone();
@@ -210,9 +203,9 @@ pub fn load_meshes<'a>(
 }
 
 pub enum TransformComponentVec {
-    Translation(Vec<Frame<Vector3>>),
-    Rotation(Vec<Frame<Quaternion>>),
-    Scale(Vec<Frame<Vector3>>),
+    Translation(Vec<Frame<Vec3>>),
+    Rotation(Vec<Frame<Quat>>),
+    Scale(Vec<Frame<Vec3>>),
 }
 
 fn frames_from_channel(
@@ -250,17 +243,14 @@ fn frames_from_channel(
                 let time = timeline_floats[i];
                 //TODO: Decide how last value should be handled
                 let value = if let Some(value) = fs.get(i + 1) {
-                    Quaternion::from_slice(value)
+                    Quat::from_slice(value)
                 } else {
-                    Quaternion::from_slice(&fs[0])
+                    Quat::from_slice(&fs[0])
                 };
                 let (in_tangent, out_tangent) = if is_sampler_cubic {
-                    (
-                        Quaternion::from_slice(&fs[i]),
-                        Quaternion::from_slice(&fs[i + 2]),
-                    )
+                    (Quat::from_slice(&fs[i]), Quat::from_slice(&fs[i + 2]))
                 } else {
-                    (Quaternion::default(), Quaternion::default())
+                    (Quat::default(), Quat::default())
                 };
                 frames.push(Frame::new(time, in_tangent, out_tangent, value));
             }
@@ -274,20 +264,20 @@ fn frames_from_channel_vec3(
     timeline_floats: Vec<f32>,
     fs: Vec<[f32; 3]>,
     is_sampler_cubic: bool,
-) -> Vec<Frame<Vector3>> {
+) -> Vec<Frame<Vec3>> {
     let mut frames = vec![];
     for i in 0..timeline_floats.len() {
         let time = timeline_floats[i];
         //TODO: Decide how last value should be handled
         let value = if let Some(value) = fs.get(i + 1) {
-            Vector3::from_slice(value)
+            Vec3::from_slice(value)
         } else {
-            Vector3::from_slice(&fs[0])
+            Vec3::from_slice(&fs[0])
         };
         let (in_tangent, out_tangent) = if is_sampler_cubic {
-            (Vector3::from_slice(&fs[i]), Vector3::from_slice(&fs[i + 2]))
+            (Vec3::from_slice(&fs[i]), Vec3::from_slice(&fs[i + 2]))
         } else {
-            (Vector3::zero(), Vector3::zero())
+            (Vec3::ZERO, Vec3::ZERO)
         };
         frames.push(Frame::new(time, in_tangent, out_tangent, value));
     }

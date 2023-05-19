@@ -1,8 +1,7 @@
 use std::ops::{Add, Mul};
 
+use glam::{Quat, Vec3};
 use num_traits::clamp;
-
-use crate::math::{quaternion::Quaternion, vector3::Vector3};
 
 use super::{
     array_type::ArrayType,
@@ -12,8 +11,8 @@ use super::{
 };
 
 pub type ScalarTrack = Track<f32>;
-pub type Vector3Track = Track<Vector3>;
-pub type QuatTrack = Track<Quaternion>;
+pub type Vector3Track = Track<Vec3>;
+pub type QuatTrack = Track<Quat>;
 
 #[derive(Debug, Clone)]
 pub struct Track<T: ArrayType> {

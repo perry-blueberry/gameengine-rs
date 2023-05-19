@@ -320,27 +320,21 @@ impl SkeletalModel {
             let j = vertex.joints;
             let w = vertex.weights;
 
-            let m0 = &(&pose_palette[j[0] as usize]
-                * &self.skeleton.inverse_bind_pose[j[0] as usize])
+            let m0 = (pose_palette[j[0] as usize] * self.skeleton.inverse_bind_pose[j[0] as usize])
                 * w[0];
-            let m1 = &(&pose_palette[j[1] as usize]
-                * &self.skeleton.inverse_bind_pose[j[1] as usize])
+            let m1 = (pose_palette[j[1] as usize] * self.skeleton.inverse_bind_pose[j[1] as usize])
                 * w[1];
-            let m2 = &(&pose_palette[j[2] as usize]
-                * &self.skeleton.inverse_bind_pose[j[2] as usize])
+            let m2 = (pose_palette[j[2] as usize] * self.skeleton.inverse_bind_pose[j[2] as usize])
                 * w[2];
-            let m3 = &(&pose_palette[j[3] as usize]
-                * &self.skeleton.inverse_bind_pose[j[3] as usize])
+            let m3 = (pose_palette[j[3] as usize] * self.skeleton.inverse_bind_pose[j[3] as usize])
                 * w[3];
 
-            let skin = &(&(&m0 + &m1) + &m2) + &m3;
+            let skin = m0 + m1 + m2 + m3;
             vertex.position = skin
-                .transform_point(self.original_positions[i].into())
-                .truncate()
+                .transform_point3(self.original_positions[i].into())
                 .into();
             vertex.normal = skin
-                .transform_vector(self.original_normals[i].into())
-                .truncate()
+                .transform_vector3(self.original_normals[i].into())
                 .into();
         }
         queue.write_buffer(

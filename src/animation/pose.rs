@@ -1,6 +1,6 @@
-use std::borrow::Borrow;
+use glam::Mat4;
 
-use crate::math::{matrix4::Matrix4, transform::Transform};
+use crate::math::glam_transform::Transform;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pose {
@@ -43,10 +43,10 @@ impl Pose {
         res
     }
 
-    pub fn matrix_palette(&self) -> Vec<Matrix4> {
+    pub fn matrix_palette(&self) -> Vec<Mat4> {
         let mut result = Vec::with_capacity(self.len());
         for i in 0..self.len() {
-            result.push(self.global_transform(i).borrow().into());
+            result.push(self.global_transform(i).into());
         }
         result
     }
