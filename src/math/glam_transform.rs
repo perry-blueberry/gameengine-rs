@@ -29,6 +29,19 @@ impl Transform {
             scale,
         }
     }
+
+    pub fn mix(&self, other: &Self, t: f32) -> Self {
+        let other_rotation = if self.rotation.dot(other.rotation) < 0.0 {
+            -other.rotation
+        } else {
+            other.rotation
+        };
+        Transform {
+            translation: self.translation.lerp(other.translation, t),
+            rotation: self.rotation.lerp(other_rotation, t),
+            scale: self.scale.lerp(other.scale, t),
+        }
+    }
 }
 
 impl Into<Mat4> for Transform {

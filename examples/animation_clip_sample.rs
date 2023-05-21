@@ -4,8 +4,8 @@ use gameengine_rs::{
         gltf_loader::{load_animation_clips, load_rest_pose},
     },
     rendering::{
-        animation_clip_player::{from_pose, AnimationClipPlayer},
         line::LineRender,
+        render_players::animation_clip_player::{from_pose, AnimationClipPlayer},
         renderable::Renderable,
         state::State,
     },

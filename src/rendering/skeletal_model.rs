@@ -25,7 +25,7 @@ use super::{
     renderable::{RenderableT, Vertex},
 };
 
-use anyhow::Result;
+use anyhow::{Ok, Result};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]
@@ -102,166 +102,29 @@ impl SkeletalModel {
         diffuse_texture: texture::Texture,
         clip: Clip,
         skeleton: Skeleton,
-    ) -> Result<SkeletalModel> {
-        let shader = device.create_shader_module(wgpu::include_wgsl!("skeletal_model.wgsl"));
-        let animated_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("animated_buffer"),
-            contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        });
-        let texture_bind_group_layout = create_texture_bind_group_layout(&device);
-
-        let camera_bind_group_layout =
-            device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("camera_bind_group_layout"),
-                entries: &[BindGroupLayoutEntry {
-                    binding: 0,
-                    count: None,
-                    ty: BindingType::Buffer {
-                        ty: BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    visibility: ShaderStages::VERTEX,
-                }],
-            });
-        let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: Some("camera_bind_group"),
-            layout: &camera_bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }],
-        });
-
-        let pose_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
-            label: Some("pose_bind_group_layout"),
-            entries: &[BindGroupLayoutEntry {
-                binding: 0,
-                count: None,
-                ty: BindingType::Buffer {
-                    ty: BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                visibility: ShaderStages::VERTEX,
-            }],
-        });
-        let pose_bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: Some("pose_bind_group"),
-            layout: &pose_bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: animated_buffer.as_entire_binding(),
-            }],
-        });
-
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render pipeline layout"),
-                bind_group_layouts: &[
-                    &texture_bind_group_layout,
-                    &camera_bind_group_layout,
-                    &pose_bind_group_layout,
-                ],
-                push_constant_ranges: &[],
-            });
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[SkeletalVertex::desc(), InstanceRaw::desc()],
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: Some(DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: CompareFunction::Less,
-                stencil: StencilState::default(),
-                bias: DepthBiasState::default(),
-            }),
-            multisample: MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: ColorWrites::all(),
-                })],
-            }),
-            multiview: None,
-        });
-
-        let instances = vec![Instance {
-            position: Vector3 {
-                x: 2.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            rotation: Quaternion::default(),
-        }];
-
-        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some("instance_buffer"),
-            contents: bytemuck::cast_slice(&instance_data),
-            usage: BufferUsages::VERTEX,
-        });
-        let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some(&format!("{:?} Vertex buffer", model_name)),
-            contents: bytemuck::cast_slice(&vertices),
-            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
-        });
-        let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
-            label: Some(&format!("{:?} Index buffer", model_name)),
-            contents: bytemuck::cast_slice(&indices),
-            usage: BufferUsages::INDEX,
-        });
-        let bind_group = device.create_bind_group(&BindGroupDescriptor {
-            label: Some("texture_bind_group"),
-            layout: &texture_bind_group_layout,
-            entries: &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: BindingResource::TextureView(&diffuse_texture.view),
-                },
-                BindGroupEntry {
-                    binding: 1,
-                    resource: BindingResource::Sampler(&diffuse_texture.sampler),
-                },
-            ],
-        });
-        let model = Model {
-            meshes: vec![Mesh {
-                name: model_name.into(),
-                vertex_buffer,
-                index_buffer,
-                num_elements: indices.len() as u32,
-                material: 0,
-                model_vertices: vertices,
-                positions: Vector3::zero(),
-            }],
-            materials: vec![model::Material {
-                name: material.name().unwrap().into(),
-                diffuse_texture,
-                bind_group,
-            }],
-        };
+    ) -> Result<Self> {
+        let (
+            render_pipeline,
+            model,
+            camera_bind_group,
+            pose_bind_group,
+            original_positions,
+            original_normals,
+            instance_buffer,
+            animated_buffer,
+        ) = new_skeletal_pipeline(
+            vertices,
+            original_positions,
+            original_normals,
+            indices,
+            model_name,
+            device,
+            config,
+            camera_buffer,
+            material,
+            diffuse_texture,
+        )
+        .await;
 
         Ok(Self {
             render_pipeline,
@@ -355,4 +218,194 @@ impl RenderableT for SkeletalModel {
         );
         std::result::Result::Ok(())
     }
+}
+
+pub async fn new_skeletal_pipeline<'a>(
+    vertices: Vec<SkeletalVertex>,
+    original_positions: Vec<[f32; 3]>,
+    original_normals: Vec<[f32; 3]>,
+    indices: Vec<u32>,
+    model_name: &str,
+    device: &Device,
+    config: &SurfaceConfiguration,
+    camera_buffer: &wgpu::Buffer,
+    material: Material<'a>,
+    diffuse_texture: texture::Texture,
+) -> (
+    RenderPipeline,
+    Model<SkeletalVertex>,
+    BindGroup,
+    BindGroup,
+    Vec<[f32; 3]>,
+    Vec<[f32; 3]>,
+    wgpu::Buffer,
+    wgpu::Buffer,
+) {
+    let shader = device.create_shader_module(wgpu::include_wgsl!("skeletal_model.wgsl"));
+    let animated_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some("animated_buffer"),
+        contents: bytemuck::cast_slice(&[Matrix4::identity(); 120]),
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+    });
+    let texture_bind_group_layout = create_texture_bind_group_layout(&device);
+
+    let camera_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("camera_bind_group_layout"),
+        entries: &[BindGroupLayoutEntry {
+            binding: 0,
+            count: None,
+            ty: BindingType::Buffer {
+                ty: BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            visibility: ShaderStages::VERTEX,
+        }],
+    });
+    let camera_bind_group = device.create_bind_group(&BindGroupDescriptor {
+        label: Some("camera_bind_group"),
+        layout: &camera_bind_group_layout,
+        entries: &[BindGroupEntry {
+            binding: 0,
+            resource: camera_buffer.as_entire_binding(),
+        }],
+    });
+
+    let pose_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+        label: Some("pose_bind_group_layout"),
+        entries: &[BindGroupLayoutEntry {
+            binding: 0,
+            count: None,
+            ty: BindingType::Buffer {
+                ty: BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            visibility: ShaderStages::VERTEX,
+        }],
+    });
+    let pose_bind_group = device.create_bind_group(&BindGroupDescriptor {
+        label: Some("pose_bind_group"),
+        layout: &pose_bind_group_layout,
+        entries: &[BindGroupEntry {
+            binding: 0,
+            resource: animated_buffer.as_entire_binding(),
+        }],
+    });
+
+    let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render pipeline layout"),
+        bind_group_layouts: &[
+            &texture_bind_group_layout,
+            &camera_bind_group_layout,
+            &pose_bind_group_layout,
+        ],
+        push_constant_ranges: &[],
+    });
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("Render pipeline"),
+        layout: Some(&render_pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: "vs_main",
+            buffers: &[SkeletalVertex::desc(), InstanceRaw::desc()],
+        },
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            polygon_mode: wgpu::PolygonMode::Fill,
+            unclipped_depth: false,
+            conservative: false,
+        },
+        depth_stencil: Some(DepthStencilState {
+            format: texture::Texture::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: CompareFunction::Less,
+            stencil: StencilState::default(),
+            bias: DepthBiasState::default(),
+        }),
+        multisample: MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: "fs_main",
+            targets: &[Some(wgpu::ColorTargetState {
+                format: config.format,
+                blend: Some(wgpu::BlendState::REPLACE),
+                write_mask: ColorWrites::all(),
+            })],
+        }),
+        multiview: None,
+    });
+
+    let instances = vec![Instance {
+        position: Vector3 {
+            x: 2.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        rotation: Quaternion::default(),
+    }];
+
+    let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+    let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some("instance_buffer"),
+        contents: bytemuck::cast_slice(&instance_data),
+        usage: BufferUsages::VERTEX,
+    });
+    let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some(&format!("{:?} Vertex buffer", model_name)),
+        contents: bytemuck::cast_slice(&vertices),
+        usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+    });
+    let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
+        label: Some(&format!("{:?} Index buffer", model_name)),
+        contents: bytemuck::cast_slice(&indices),
+        usage: BufferUsages::INDEX,
+    });
+    let bind_group = device.create_bind_group(&BindGroupDescriptor {
+        label: Some("texture_bind_group"),
+        layout: &texture_bind_group_layout,
+        entries: &[
+            BindGroupEntry {
+                binding: 0,
+                resource: BindingResource::TextureView(&diffuse_texture.view),
+            },
+            BindGroupEntry {
+                binding: 1,
+                resource: BindingResource::Sampler(&diffuse_texture.sampler),
+            },
+        ],
+    });
+    let model = Model {
+        meshes: vec![Mesh {
+            name: model_name.into(),
+            vertex_buffer,
+            index_buffer,
+            num_elements: indices.len() as u32,
+            material: 0,
+            model_vertices: vertices,
+            positions: Vector3::zero(),
+        }],
+        materials: vec![model::Material {
+            name: material.name().unwrap().into(),
+            diffuse_texture,
+            bind_group,
+        }],
+    };
+    (
+        render_pipeline,
+        model,
+        camera_bind_group,
+        pose_bind_group,
+        original_positions,
+        original_normals,
+        instance_buffer,
+        animated_buffer,
+    )
 }

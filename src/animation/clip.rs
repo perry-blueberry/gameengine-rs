@@ -6,7 +6,7 @@ use super::{pose::Pose, track::loop_time, transform_track::TransformTrack};
 pub struct Clip {
     tracks: Vec<TransformTrack>,
     pub name: String,
-    start_time: f32,
+    pub start_time: f32,
     end_time: f32,
     pub looping: bool,
 }

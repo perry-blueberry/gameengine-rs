@@ -63,7 +63,6 @@ impl Pose {
         // Fallback to calculating the global transform for the rest
         for j in i..self.len() {
             result[j] = self.global_transform(j).into();
-            i = j;
         }
         result
     }
@@ -82,5 +81,31 @@ impl Pose {
 
     pub fn add_parent(&mut self, parent: Option<usize>) {
         self.parents.push(parent);
+    }
+
+    pub fn blend(&mut self, a: &Self, b: &Self, t: f32, blend_root: Option<usize>) {
+        for i in 0..self.len() {
+            // Only check hierarchy if a blend_root is present
+            if let Some(blend_root) = blend_root {
+                if !self.is_in_hierarchy(blend_root, i) {
+                    continue;
+                }
+            }
+            self.set_local_transform(i, a.local_transform(i).mix(b.local_transform(i), t));
+        }
+    }
+
+    fn is_in_hierarchy(&self, parent: usize, search: usize) -> bool {
+        if search == parent {
+            return true;
+        }
+        let mut current_parent = search;
+        while let Some(new_parent) = self.parent(current_parent) {
+            if new_parent == parent {
+                return true;
+            }
+            current_parent = new_parent;
+        }
+        false
     }
 }

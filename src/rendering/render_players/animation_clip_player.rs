@@ -8,7 +8,7 @@ use crate::{
     texture,
 };
 
-use super::{
+use super::super::{
     line::LineRender,
     renderable::{RenderableT, SimpleVertex},
 };
