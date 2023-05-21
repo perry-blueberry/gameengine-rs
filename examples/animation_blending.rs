@@ -1,21 +1,15 @@
 use gameengine_rs::{
     animation::{
         clip::Clip,
-        gltf_loader::{load_animation_clips, load_meshes, load_rest_pose, load_skeleton},
+        gltf_loader::{load_animation_clips, load_meshes, load_skeleton},
     },
     rendering::{
-        line::LineRender,
-        render_players::{
-            animation_clip_player::{from_pose, AnimationClipPlayer},
-            blender_player::{self, BlenderPlayer},
-        },
-        renderable::Renderable,
-        state::State,
+        render_players::blender_player::BlenderPlayer, renderable::Renderable, state::State,
     },
     resources::load_texture,
-    run, texture,
+    run,
 };
-use wgpu::{CompareFunction, DepthBiasState, DepthStencilState, StencilState};
+
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 pub fn main() {
     let event_loop = EventLoop::new();
