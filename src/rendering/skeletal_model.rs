@@ -1,4 +1,7 @@
-use std::mem::size_of;
+use std::{
+    mem::size_of,
+    sync::{Arc, RwLock},
+};
 
 use bytemuck::{Pod, Zeroable};
 use glam::Mat4;
@@ -99,7 +102,7 @@ impl SkeletalModel {
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
         material: Material<'a>,
-        diffuse_texture: texture::Texture,
+        diffuse_texture: Arc<RwLock<texture::Texture>>,
         clip: Clip,
         skeleton: Skeleton,
     ) -> Result<Self> {
@@ -121,10 +124,9 @@ impl SkeletalModel {
             device,
             config,
             camera_buffer,
-            material,
+            &material,
             diffuse_texture,
-        )
-        .await;
+        );
 
         Ok(Self {
             render_pipeline,
@@ -220,7 +222,7 @@ impl RenderableT for SkeletalModel {
     }
 }
 
-pub async fn new_skeletal_pipeline<'a>(
+pub fn new_skeletal_pipeline<'a>(
     vertices: Vec<SkeletalVertex>,
     original_positions: Vec<[f32; 3]>,
     original_normals: Vec<[f32; 3]>,
@@ -229,8 +231,8 @@ pub async fn new_skeletal_pipeline<'a>(
     device: &Device,
     config: &SurfaceConfiguration,
     camera_buffer: &wgpu::Buffer,
-    material: Material<'a>,
-    diffuse_texture: texture::Texture,
+    material: &Material<'a>,
+    diffuse_texture: Arc<RwLock<texture::Texture>>,
 ) -> (
     RenderPipeline,
     Model<SkeletalVertex>,
@@ -368,20 +370,23 @@ pub async fn new_skeletal_pipeline<'a>(
         contents: bytemuck::cast_slice(&indices),
         usage: BufferUsages::INDEX,
     });
-    let bind_group = device.create_bind_group(&BindGroupDescriptor {
-        label: Some("texture_bind_group"),
-        layout: &texture_bind_group_layout,
-        entries: &[
-            BindGroupEntry {
-                binding: 0,
-                resource: BindingResource::TextureView(&diffuse_texture.view),
-            },
-            BindGroupEntry {
-                binding: 1,
-                resource: BindingResource::Sampler(&diffuse_texture.sampler),
-            },
-        ],
-    });
+    let bind_group = {
+        let diffuse_texture = diffuse_texture.read().unwrap();
+        device.create_bind_group(&BindGroupDescriptor {
+            label: Some("texture_bind_group"),
+            layout: &texture_bind_group_layout,
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: BindingResource::TextureView(&diffuse_texture.view),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: BindingResource::Sampler(&diffuse_texture.sampler),
+                },
+            ],
+        })
+    };
     let model = Model {
         meshes: vec![Mesh {
             name: model_name.into(),

@@ -1,3 +1,4 @@
+use std::sync::{Arc, RwLock};
 use std::{mem::size_of, ops::Range};
 
 use anyhow::Ok;
@@ -70,7 +71,7 @@ pub struct Mesh<T: Vertex> {
 
 pub struct Material {
     pub name: String,
-    pub diffuse_texture: texture::Texture,
+    pub diffuse_texture: Arc<RwLock<texture::Texture>>,
     pub bind_group: BindGroup,
 }
 

@@ -2,6 +2,7 @@ use std::{
     fs,
     io::{BufReader, Cursor},
     path::{Path, PathBuf},
+    sync::{Arc, RwLock},
 };
 
 use anyhow::*;
@@ -100,6 +101,7 @@ async fn load_obj_model(
                 },
             ],
         });
+        let diffuse_texture = Arc::new(RwLock::new(diffuse_texture));
 
         materials.push(model::Material {
             name: m.name,

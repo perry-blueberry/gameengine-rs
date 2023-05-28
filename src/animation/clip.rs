@@ -88,7 +88,7 @@ impl Clip {
         in_time
     }
 
-    fn duration(&self) -> f32 {
+    pub fn duration(&self) -> f32 {
         self.end_time - self.start_time
     }
 }

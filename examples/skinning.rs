@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use gameengine_rs::{
     animation::{
         clip::Clip,
@@ -19,6 +21,7 @@ pub fn main() {
     let diffuse_texture =
         pollster::block_on(load_texture("Woman.png", &state.device, &state.queue))
             .expect("Failed to read diffuse texture");
+    let diffuse_texture = Arc::new(RwLock::new(diffuse_texture));
     let animation_clips: Vec<Clip> = load_animation_clips(&document, &buffers);
     let current_clip = animation_clips
         .iter()

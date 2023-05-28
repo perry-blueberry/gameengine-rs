@@ -2,6 +2,8 @@ use glam::Mat4;
 
 use crate::math::glam_transform::Transform;
 
+use super::{clip::Clip, skeleton::Skeleton};
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pose {
     joints: Vec<Transform>,
@@ -15,6 +17,13 @@ impl Pose {
             parents: vec![],
         }
     }
+
+    pub fn make_additive(skeleton: &Skeleton, clip: &Clip) -> Self {
+        let mut result = skeleton.rest_pose.clone();
+        clip.sample(&mut result, clip.start_time);
+        result
+    }
+
     pub fn len(&self) -> usize {
         self.joints.len()
     }
@@ -92,6 +101,31 @@ impl Pose {
                 }
             }
             self.set_local_transform(i, a.local_transform(i).mix(b.local_transform(i), t));
+        }
+    }
+
+    pub fn add(
+        &mut self,
+        in_pose: &Pose,
+        add_pose: &Pose,
+        base_pose: &Pose,
+        blend_root: Option<usize>,
+    ) {
+        for i in 0..add_pose.len() {
+            if let Some(blend_root) = blend_root {
+                if !add_pose.is_in_hierarchy(blend_root, i) {
+                    continue;
+                }
+            }
+            let input = in_pose.local_transform(i);
+            let additive = add_pose.local_transform(i);
+            let additive_base = base_pose.local_transform(i);
+            let result = Transform {
+                translation: input.translation + (additive.translation - additive_base.translation),
+                rotation: (input.rotation * (additive_base.rotation.inverse() * additive.rotation)),
+                scale: input.scale + (additive.scale - additive_base.scale),
+            };
+            self.set_local_transform(i, result);
         }
     }
 

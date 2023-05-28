@@ -92,6 +92,7 @@ where
                     return T::default();
                 }
                 let t = (track_time - this_frame_time) / frame_delta;
+                // TODO: Flipping these causes the rotation to be correct for layered animations
                 let start = T::from_slice(&self.frames[this_frame].value);
                 let end = T::from_slice(&self.frames[next_frame].value);
                 start.interpolate(&end, t)
