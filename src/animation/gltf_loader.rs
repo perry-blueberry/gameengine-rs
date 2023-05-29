@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use bytemuck::Zeroable;
 use glam::{Mat4, Quat, Vec3};
 use gltf::animation::util::ReadOutputs;
 use gltf::{animation::Channel, buffer::Data, Document};
@@ -239,20 +240,30 @@ fn frames_from_channel(
             let fs: Vec<[f32; 4]> = fs.collect();
             let mut frames = vec![];
             assert_eq!(fs.len(), timeline_floats.len());
-            for i in 0..timeline_floats.len() {
-                let time = timeline_floats[i];
-                //TODO: Decide how last value should be handled
-                let value = if let Some(value) = fs.get(i + 1) {
-                    Quat::from_slice(value)
-                } else {
-                    Quat::from_slice(&fs[0])
-                };
-                let (in_tangent, out_tangent) = if is_sampler_cubic {
-                    (Quat::from_slice(&fs[i]), Quat::from_slice(&fs[i + 2]))
-                } else {
-                    (Quat::default(), Quat::default())
-                };
-                frames.push(Frame::new(time, in_tangent, out_tangent, value));
+            if !is_sampler_cubic {
+                for i in 0..timeline_floats.len() {
+                    let time = timeline_floats[i];
+                    let value = Quat::from_slice(&fs[i]);
+                    frames.push(Frame::new(time, Quat::zeroed(), Quat::zeroed(), value));
+                }
+            } else {
+                todo!("Implement cubic sampling");
+                /* for i in 0..timeline_floats.len() {
+                    let time = timeline_floats[i];
+                    //TODO: Decide how last value should be handled
+                    let value = if let Some(value) = fs.get(i + 1) {
+                        Quat::from_slice(value)
+                    } else {
+                        Quat::zeroed()
+                        /* Quat::from_slice(&fs[0]) */
+                    };
+                    let (in_tangent, out_tangent) = if is_sampler_cubic {
+                        (Quat::from_slice(&fs[i]), Quat::from_slice(&fs[i + 2]))
+                    } else {
+                        (Quat::zeroed(), Quat::zeroed())
+                    };
+                    frames.push(Frame::new(time, in_tangent, out_tangent, value));
+                } */
             }
             (TransformComponentVec::Rotation(frames), interpolation)
         }
@@ -266,20 +277,29 @@ fn frames_from_channel_vec3(
     is_sampler_cubic: bool,
 ) -> Vec<Frame<Vec3>> {
     let mut frames = vec![];
-    for i in 0..timeline_floats.len() {
-        let time = timeline_floats[i];
-        //TODO: Decide how last value should be handled
-        let value = if let Some(value) = fs.get(i + 1) {
-            Vec3::from_slice(value)
-        } else {
-            Vec3::from_slice(&fs[0])
-        };
-        let (in_tangent, out_tangent) = if is_sampler_cubic {
-            (Vec3::from_slice(&fs[i]), Vec3::from_slice(&fs[i + 2]))
-        } else {
-            (Vec3::ZERO, Vec3::ZERO)
-        };
-        frames.push(Frame::new(time, in_tangent, out_tangent, value));
+    if !is_sampler_cubic {
+        for i in 0..timeline_floats.len() {
+            let time = timeline_floats[i];
+            let value = Vec3::from_slice(&fs[i]);
+            frames.push(Frame::new(time, Vec3::ZERO, Vec3::ZERO, value));
+        }
+    } else {
+        todo!("Implement cubic sampling");
+        /* for i in 0..timeline_floats.len() {
+            let time = timeline_floats[i];
+            //TODO: Decide how last value should be handled
+            let value = if let Some(value) = fs.get(i + 1) {
+                Vec3::from_slice(value)
+            } else {
+                Vec3::from_slice(&fs[0])
+            };
+            let (in_tangent, out_tangent) = if is_sampler_cubic {
+                (Vec3::from_slice(&fs[i]), Vec3::from_slice(&fs[i + 2]))
+            } else {
+                (Vec3::ZERO, Vec3::ZERO)
+            };
+            frames.push(Frame::new(time, in_tangent, out_tangent, value));
+        } */
     }
     frames
 }
