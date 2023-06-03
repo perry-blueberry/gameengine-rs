@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     animation::{clip::Clip, pose::Pose, skeleton::Skeleton},
+    instance::Instance,
     rendering::{
         model::{DrawModel, Model},
         renderable::RenderableT,
@@ -71,6 +72,7 @@ impl BlenderPlayer {
         material: Material<'a>,
         diffuse_texture: Arc<RwLock<texture::Texture>>,
         skeleton: Arc<Skeleton>,
+        instances: Arc<RwLock<Vec<Instance>>>,
         pose: Pose,
         clip_a: Clip,
         clip_b: Clip,
@@ -88,18 +90,22 @@ impl BlenderPlayer {
             _original_normals,
             instance_buffer,
             animated_buffer,
-        ) = new_skeletal_pipeline(
-            vertices,
-            original_positions,
-            original_normals,
-            indices,
-            model_name,
-            device,
-            config,
-            camera_buffer,
-            &material,
-            diffuse_texture,
-        );
+        ) = {
+            let instances = instances.read().unwrap();
+            new_skeletal_pipeline(
+                vertices,
+                original_positions,
+                original_normals,
+                indices,
+                model_name,
+                device,
+                config,
+                camera_buffer,
+                &material,
+                diffuse_texture,
+                &instances,
+            )
+        };
         Ok(Self {
             base: Base {
                 render_pipeline,
@@ -136,6 +142,7 @@ impl BlenderPlayer {
         material: Material<'a>,
         diffuse_texture: Arc<RwLock<texture::Texture>>,
         skeleton: Arc<Skeleton>,
+        instances: Arc<RwLock<Vec<Instance>>>,
         current_pose: Pose,
         add_pose: Pose,
         additive_base: Pose,
@@ -152,18 +159,22 @@ impl BlenderPlayer {
             _original_normals,
             instance_buffer,
             animated_buffer,
-        ) = new_skeletal_pipeline(
-            vertices,
-            original_positions,
-            original_normals,
-            indices,
-            model_name,
-            device,
-            config,
-            camera_buffer,
-            &material,
-            diffuse_texture,
-        );
+        ) = {
+            let instances = instances.read().unwrap();
+            new_skeletal_pipeline(
+                vertices,
+                original_positions,
+                original_normals,
+                indices,
+                model_name,
+                device,
+                config,
+                camera_buffer,
+                &material,
+                diffuse_texture,
+                &instances,
+            )
+        };
         Ok(Self {
             base: Base {
                 render_pipeline,

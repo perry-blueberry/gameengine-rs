@@ -5,6 +5,8 @@ use gameengine_rs::{
         clip::Clip,
         gltf_loader::{load_animation_clips, load_meshes, load_skeleton},
     },
+    instance::Instance,
+    math::{quaternion::Quaternion, vector3::Vector3},
     rendering::{renderable::Renderable, skeletal_model::SkeletalModel, state::State},
     resources::load_texture,
     run,
@@ -29,6 +31,14 @@ pub fn main() {
         .unwrap()
         .to_owned();
     let skeleton = load_skeleton(&document, &buffers);
+    let instances = Arc::new(RwLock::new(vec![Instance {
+        position: Vector3 {
+            x: 2.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        rotation: Quaternion::default(),
+    }]));
     let model = pollster::block_on(SkeletalModel::new(
         vertices,
         original_positions,
@@ -42,6 +52,7 @@ pub fn main() {
         diffuse_texture,
         current_clip,
         skeleton,
+        instances,
     ))
     .unwrap();
     state.add_renderable(Renderable::SkeletalModel(model));

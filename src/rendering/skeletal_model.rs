@@ -105,6 +105,7 @@ impl SkeletalModel {
         diffuse_texture: Arc<RwLock<texture::Texture>>,
         clip: Clip,
         skeleton: Skeleton,
+        instances: Arc<RwLock<Vec<Instance>>>,
     ) -> Result<Self> {
         let (
             render_pipeline,
@@ -115,18 +116,22 @@ impl SkeletalModel {
             original_normals,
             instance_buffer,
             animated_buffer,
-        ) = new_skeletal_pipeline(
-            vertices,
-            original_positions,
-            original_normals,
-            indices,
-            model_name,
-            device,
-            config,
-            camera_buffer,
-            &material,
-            diffuse_texture,
-        );
+        ) = {
+            let instances = instances.read().unwrap();
+            new_skeletal_pipeline(
+                vertices,
+                original_positions,
+                original_normals,
+                indices,
+                model_name,
+                device,
+                config,
+                camera_buffer,
+                &material,
+                diffuse_texture,
+                &instances,
+            )
+        };
 
         Ok(Self {
             render_pipeline,
@@ -233,6 +238,7 @@ pub fn new_skeletal_pipeline<'a>(
     camera_buffer: &wgpu::Buffer,
     material: &Material<'a>,
     diffuse_texture: Arc<RwLock<texture::Texture>>,
+    instances: &Vec<Instance>,
 ) -> (
     RenderPipeline,
     Model<SkeletalVertex>,
@@ -344,15 +350,6 @@ pub fn new_skeletal_pipeline<'a>(
         }),
         multiview: None,
     });
-
-    let instances = vec![Instance {
-        position: Vector3 {
-            x: 2.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        rotation: Quaternion::default(),
-    }];
 
     let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
     let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {

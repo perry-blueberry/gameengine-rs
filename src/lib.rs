@@ -10,7 +10,7 @@ pub mod animation;
 pub mod camera;
 mod camera_controller;
 mod collisions;
-mod instance;
+pub mod instance;
 pub mod math;
 pub mod rendering;
 pub mod resources;
