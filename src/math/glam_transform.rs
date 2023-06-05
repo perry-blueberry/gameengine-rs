@@ -8,6 +8,14 @@ pub struct Transform {
 }
 
 impl Transform {
+    pub fn new(translation: Vec3, rotation: Quat, scale: Vec3) -> Self {
+        Self {
+            translation,
+            rotation,
+            scale,
+        }
+    }
+
     pub fn combine(&self, other: &Self) -> Self {
         let scale = self.scale * other.scale;
         let rotation = self.rotation * other.rotation;
@@ -44,6 +52,16 @@ impl Transform {
     }
 }
 
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            translation: Default::default(),
+            rotation: Default::default(),
+            scale: Default::default(),
+        }
+    }
+}
+
 impl Into<Mat4> for Transform {
     fn into(self) -> Mat4 {
         Mat4::from_scale_rotation_translation(self.scale, self.rotation, self.translation)
@@ -58,5 +76,37 @@ impl From<Mat4> for Transform {
             rotation,
             scale,
         }
+    }
+}
+
+pub trait FromTo {
+    fn from_to(from: Vec3, to: Vec3) -> Quat;
+}
+
+impl FromTo for Quat {
+    fn from_to(from: Vec3, to: Vec3) -> Quat {
+        let from = from.normalize();
+        let to = to.normalize();
+
+        if from == to {
+            return Quat::default();
+        }
+
+        if from == to * -1.0 {
+            let ortho = if from.x < from.y && from.x < from.z {
+                Vec3::X
+            } else if from.y < from.z {
+                Vec3::Y
+            } else {
+                Vec3::Z
+            };
+            let axis = from.cross(ortho).normalize();
+            return Quat::from_axis_angle(axis, 0.0);
+        }
+
+        let half = (from + to).normalize();
+        let axis = from.cross(half);
+        Quat::from_xyzw(axis.x, axis.y, axis.z, from.dot(half))
+        /* Quat::from_axis_angle(axis, from.dot(half)) */
     }
 }

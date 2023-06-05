@@ -5,7 +5,10 @@ use super::{
     line::LineRender,
     model::TriangleModel,
     point::PointRender,
-    render_players::{animation_clip_player::AnimationClipPlayer, blender_player::BlenderPlayer},
+    render_players::{
+        animation_clip_player::AnimationClipPlayer, blender_player::BlenderPlayer,
+        ik_player::IkPlayer,
+    },
     skeletal_model::SkeletalModel,
 };
 
@@ -16,6 +19,7 @@ pub enum Renderable {
     AnimationClipPlayer(AnimationClipPlayer),
     SkeletalModel(SkeletalModel),
     BlenderPlayer(BlenderPlayer),
+    IkPlayer(IkPlayer),
 }
 
 //TODO: Use a crate (proxy_enum, enum_dispatch) or create macro
@@ -28,6 +32,7 @@ impl RenderableT for Renderable {
             Renderable::AnimationClipPlayer(a) => a.resize(new_size),
             Renderable::SkeletalModel(m) => m.resize(new_size),
             Renderable::BlenderPlayer(p) => p.resize(new_size),
+            Renderable::IkPlayer(p) => p.resize(new_size),
         }
     }
     fn input(&mut self, event: &WindowEvent) -> bool {
@@ -38,6 +43,7 @@ impl RenderableT for Renderable {
             Renderable::AnimationClipPlayer(a) => a.input(event),
             Renderable::SkeletalModel(m) => m.input(event),
             Renderable::BlenderPlayer(p) => p.input(event),
+            Renderable::IkPlayer(p) => p.input(event),
         }
     }
     fn update(&mut self, delta_time: f32, queue: &Queue) {
@@ -48,6 +54,7 @@ impl RenderableT for Renderable {
             Renderable::AnimationClipPlayer(a) => a.update(delta_time, queue),
             Renderable::SkeletalModel(m) => m.update(delta_time, queue),
             Renderable::BlenderPlayer(p) => p.update(delta_time, queue),
+            Renderable::IkPlayer(p) => p.update(delta_time, queue),
         }
     }
     fn render<'a, 'b: 'a>(
@@ -61,6 +68,7 @@ impl RenderableT for Renderable {
             Renderable::AnimationClipPlayer(a) => a.render(render_pass),
             Renderable::SkeletalModel(m) => m.render(render_pass),
             Renderable::BlenderPlayer(p) => p.render(render_pass),
+            Renderable::IkPlayer(p) => p.render(render_pass),
         }
     }
 }

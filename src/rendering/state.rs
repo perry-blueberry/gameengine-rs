@@ -26,7 +26,7 @@ pub struct State {
     size: PhysicalSize<u32>,
     window: Window,
     depth_texture: texture::Texture,
-    camera_persp: CameraPerspective,
+    pub camera_persp: CameraPerspective,
     camera_persp_uniform: CameraUniform,
     pub camera_persp_buffer: wgpu::Buffer,
     camera_persp_controller: CameraController,
@@ -203,6 +203,10 @@ impl State {
         for renderable in &mut self.renderables {
             renderable.update(delta_time, &self.queue);
         }
+
+        for renderable in &mut self.ui_renderables {
+            renderable.update(delta_time, &self.queue);
+        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -278,5 +282,16 @@ impl State {
 
     pub fn size(&self) -> PhysicalSize<u32> {
         self.size
+    }
+
+    pub fn set_ortho_camera(&mut self, camera_ortho: CameraOrtho) {
+        self.camera_ortho = camera_ortho;
+        self.camera_ortho_uniform
+            .update_view_proj(&self.camera_ortho);
+        self.queue.write_buffer(
+            &self.camera_ortho_buffer,
+            0,
+            cast_slice(&[self.camera_ortho_uniform]),
+        );
     }
 }

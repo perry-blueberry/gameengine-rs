@@ -106,13 +106,13 @@ impl PointRender {
         let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertices),
-            usage: BufferUsages::VERTEX,
+            usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
 
         let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(&indices),
-            usage: BufferUsages::INDEX,
+            usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
         });
 
         Self {
@@ -122,6 +122,13 @@ impl PointRender {
             index_buffer,
             num_indices: indices.len() as u32,
         }
+    }
+
+    pub fn update_vertices(&mut self, vertices: &Vec<SimpleVertex>, queue: &Queue) {
+        let (vertices, indices) = vertices_to_points(vertices);
+        queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+        queue.write_buffer(&self.index_buffer, 0, bytemuck::cast_slice(&indices));
+        self.num_indices = indices.len() as u32;
     }
 }
 

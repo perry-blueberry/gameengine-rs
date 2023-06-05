@@ -115,8 +115,9 @@ impl LineRender {
         }
     }
 
-    pub fn update_lines(&mut self, vertices: Vec<SimpleVertex>, queue: &Queue) {
-        queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+    pub fn update_lines(&mut self, vertices: &Vec<SimpleVertex>, queue: &Queue) {
+        self.num_vertices = vertices.len() as u32;
+        queue.write_buffer(&self.vertex_buffer, 0, bytemuck::cast_slice(vertices));
     }
 }
 

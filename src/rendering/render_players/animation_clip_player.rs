@@ -56,7 +56,7 @@ impl RenderableT for AnimationClipPlayer {
         let time = self.playback_time + delta_time;
         self.playback_time = self.clip.sample(&mut self.pose, time);
         let vertices = from_pose(&self.pose, [0.0, 1.0, 0.0]);
-        self.line_render.update_lines(vertices, queue);
+        self.line_render.update_lines(&vertices, queue);
     }
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
