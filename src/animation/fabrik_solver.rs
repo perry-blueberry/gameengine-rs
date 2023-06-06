@@ -51,6 +51,11 @@ impl FabrikSolver {
 
             self.iterate_backward(goal);
             self.iterate_forward(base);
+
+            // TODO: Match on constraint type
+            /* self.world_to_ik_chain(); */
+            // TODO: Apply constraint
+            /* self.ik_chain_to_world(); */
         }
 
         self.world_to_ik_chain();
@@ -141,5 +146,33 @@ impl FabrikSolver {
             let offset = direction * self.lengths[i];
             self.world_chain[i] = self.world_chain[i - 1] + offset;
         }
+    }
+
+    fn apply_ball_and_socket_constraint(&mut self, index: usize, limit: f32) {
+        let parent_rot = if index == 0 {
+            /* self.offset.rotation */
+            Quat::default()
+        } else {
+            self./* world_transform */global_transform(index - 1).rotation
+        };
+        let this_rot = self./* world_transform */global_transform(index).rotation;
+        let parent_dir = parent_rot * Vec3::Z;
+        let this_dir = this_rot * Vec3::Z;
+        let angle = parent_dir.angle_between(this_dir);
+        if angle > f32::to_radians(limit) {
+            let correction = parent_dir.cross(this_dir);
+            let world_space_rotation =
+                parent_rot * Quat::from_axis_angle(correction, f32::to_radians(limit));
+            self./* chain */ik_chain[index].rotation = world_space_rotation * parent_rot.inverse();
+        }
+    }
+
+    fn apply_hinge_constraint(&mut self, index: usize, axis: Vec3) {
+        let joint = self./* world_transform */global_transform(index);
+        let parent = self./* world_transform */global_transform(index - 1);
+        let current_hinge = joint.rotation * axis;
+        let desired_hinge = parent.rotation * axis;
+        self./* chain */ik_chain[index].rotation =
+            self./* chain */ik_chain[index].rotation * Quat::from_to(current_hinge, desired_hinge);
     }
 }
