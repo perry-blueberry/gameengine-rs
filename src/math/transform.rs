@@ -51,3 +51,13 @@ impl Transform {
         self.rotation * (self.scale * v)
     }
 }
+
+impl From<super::glam_transform::Transform> for Transform {
+    fn from(value: super::glam_transform::Transform) -> Self {
+        Self {
+            translation: value.translation.into(),
+            rotation: value.rotation.into(),
+            scale: value.scale.into(),
+        }
+    }
+}

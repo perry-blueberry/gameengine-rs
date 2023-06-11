@@ -57,7 +57,7 @@ impl Default for Transform {
         Self {
             translation: Default::default(),
             rotation: Default::default(),
-            scale: Default::default(),
+            scale: Vec3::ONE,
         }
     }
 }
@@ -108,5 +108,24 @@ impl FromTo for Quat {
         let axis = from.cross(half);
         Quat::from_xyzw(axis.x, axis.y, axis.z, from.dot(half))
         /* Quat::from_axis_angle(axis, from.dot(half)) */
+    }
+}
+
+pub trait LookRotation {
+    fn look_rotation(direction: Vec3, up: Vec3) -> Self;
+}
+impl LookRotation for Quat {
+    fn look_rotation(direction: Vec3, up: Vec3) -> Self {
+        let f = direction.normalize();
+        let u = up.normalize();
+        let r = u.cross(f);
+        let u = f.cross(r);
+
+        let f2d = Quat::from_rotation_arc(Vec3::Z, f);
+        let object_up = f2d * Vec3::Y;
+        let u2u = Quat::from_rotation_arc(object_up, u);
+
+        /* HERE? */
+        (u2u * f2d).normalize()
     }
 }

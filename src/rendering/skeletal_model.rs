@@ -19,7 +19,7 @@ use wgpu::{
 use crate::{
     animation::{clip::Clip, pose::Pose, skeleton::Skeleton},
     instance::{Instance, InstanceRaw},
-    math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3},
+    math::{matrix4::Matrix4, vector3::Vector3},
     texture::{self, create_texture_bind_group_layout},
 };
 
@@ -83,8 +83,8 @@ pub struct SkeletalModel {
     pose_bind_group: BindGroup,
     original_positions: Vec<[f32; 3]>,
     original_normals: Vec<[f32; 3]>,
-    instance_buffer: wgpu::Buffer,
-    animated_buffer: wgpu::Buffer,
+    pub instance_buffer: wgpu::Buffer,
+    pub animated_buffer: wgpu::Buffer,
     animated_pose: Pose,
     clip: Clip,
     skeleton: Skeleton,
@@ -107,7 +107,7 @@ impl SkeletalModel {
         skeleton: Skeleton,
         instances: Arc<RwLock<Vec<Instance>>>,
     ) -> Result<Self> {
-        let (
+        let SkeletalModelBase {
             render_pipeline,
             model,
             camera_bind_group,
@@ -116,7 +116,7 @@ impl SkeletalModel {
             original_normals,
             instance_buffer,
             animated_buffer,
-        ) = {
+        } = {
             let instances = instances.read().unwrap();
             new_skeletal_pipeline(
                 vertices,
@@ -227,6 +227,17 @@ impl RenderableT for SkeletalModel {
     }
 }
 
+pub struct SkeletalModelBase {
+    pub render_pipeline: RenderPipeline,
+    pub model: Model<SkeletalVertex>,
+    pub camera_bind_group: BindGroup,
+    pub pose_bind_group: BindGroup,
+    pub original_positions: Vec<[f32; 3]>,
+    pub original_normals: Vec<[f32; 3]>,
+    pub instance_buffer: wgpu::Buffer,
+    pub animated_buffer: wgpu::Buffer,
+}
+
 pub fn new_skeletal_pipeline<'a>(
     vertices: Vec<SkeletalVertex>,
     original_positions: Vec<[f32; 3]>,
@@ -239,16 +250,7 @@ pub fn new_skeletal_pipeline<'a>(
     material: &Material<'a>,
     diffuse_texture: Arc<RwLock<texture::Texture>>,
     instances: &Vec<Instance>,
-) -> (
-    RenderPipeline,
-    Model<SkeletalVertex>,
-    BindGroup,
-    BindGroup,
-    Vec<[f32; 3]>,
-    Vec<[f32; 3]>,
-    wgpu::Buffer,
-    wgpu::Buffer,
-) {
+) -> SkeletalModelBase {
     let shader = device.create_shader_module(wgpu::include_wgsl!("skeletal_model.wgsl"));
     let animated_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("animated_buffer"),
@@ -355,7 +357,7 @@ pub fn new_skeletal_pipeline<'a>(
     let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("instance_buffer"),
         contents: bytemuck::cast_slice(&instance_data),
-        usage: BufferUsages::VERTEX,
+        usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
     });
     let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some(&format!("{:?} Vertex buffer", model_name)),
@@ -400,7 +402,7 @@ pub fn new_skeletal_pipeline<'a>(
             bind_group,
         }],
     };
-    (
+    SkeletalModelBase {
         render_pipeline,
         model,
         camera_bind_group,
@@ -409,5 +411,5 @@ pub fn new_skeletal_pipeline<'a>(
         original_normals,
         instance_buffer,
         animated_buffer,
-    )
+    }
 }

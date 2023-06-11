@@ -9,7 +9,7 @@ use winit::{
 pub mod animation;
 pub mod camera;
 mod camera_controller;
-mod collisions;
+pub mod collisions;
 pub mod instance;
 pub mod math;
 pub mod rendering;

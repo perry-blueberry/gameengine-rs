@@ -6,7 +6,7 @@ use crate::{
     rendering::{
         model::{DrawModel, Model},
         renderable::RenderableT,
-        skeletal_model::{new_skeletal_pipeline, SkeletalVertex},
+        skeletal_model::{new_skeletal_pipeline, SkeletalModelBase, SkeletalVertex},
     },
     texture,
 };
@@ -81,16 +81,16 @@ impl BlenderPlayer {
         pose_a: Pose,
         pose_b: Pose,
     ) -> Result<Self> {
-        let (
+        let SkeletalModelBase {
             render_pipeline,
             model,
             camera_bind_group,
             pose_bind_group,
-            _original_positions,
-            _original_normals,
+            original_positions: _,
+            original_normals: _,
             instance_buffer,
             animated_buffer,
-        ) = {
+        } = {
             let instances = instances.read().unwrap();
             new_skeletal_pipeline(
                 vertices,
@@ -150,16 +150,16 @@ impl BlenderPlayer {
         clip_index: usize,
         additive_index: usize,
     ) -> Result<Self> {
-        let (
+        let SkeletalModelBase {
             render_pipeline,
             model,
             camera_bind_group,
             pose_bind_group,
-            _original_positions,
-            _original_normals,
+            original_positions: _,
+            original_normals: _,
             instance_buffer,
             animated_buffer,
-        ) = {
+        } = {
             let instances = instances.read().unwrap();
             new_skeletal_pipeline(
                 vertices,

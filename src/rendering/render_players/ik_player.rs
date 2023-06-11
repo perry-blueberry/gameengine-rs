@@ -1,7 +1,5 @@
 use crate::{
-    animation::{
-        fabrik_solver::FabrikSolver, track::Vector3Track, transform_track::TransformTrack,
-    },
+    animation::{fabrik_solver::FabrikSolver, transform_track::TransformTrack},
     math::glam_transform::Transform,
     rendering::{
         line::LineRender,

@@ -282,6 +282,17 @@ impl From<[f32; 4]> for Quaternion {
     }
 }
 
+impl From<glam::Quat> for Quaternion {
+    fn from(value: glam::Quat) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+            z: value.z,
+            w: value.w,
+        }
+    }
+}
+
 /* #[derive(Clone, Copy)]
 struct XYZW {
     pub x: f32,

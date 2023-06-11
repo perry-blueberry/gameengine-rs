@@ -7,6 +7,7 @@ use gltf::{animation::Channel, buffer::Data, Document};
 use gltf::{Material, Node, Skin};
 
 use crate::math::glam_transform::Transform;
+use crate::rendering::model::ModelVertex;
 use crate::rendering::skeletal_model::SkeletalVertex;
 
 use super::skeleton::Skeleton;
@@ -124,7 +125,7 @@ pub fn load_animation_clips(data: &Document, buffer_data: &Vec<Data>) -> Vec<Cli
     results
 }
 
-pub fn load_meshes<'a>(
+pub fn load_skinned_meshes<'a>(
     data: &'a Document,
     buffer_data: &Vec<Data>,
 ) -> (
@@ -198,6 +199,48 @@ pub fn load_meshes<'a>(
                 });
             }
             return (vertices, positions, normals, indices, primitive.material());
+        }
+    }
+    panic!("GLTF didn't have any primitives");
+}
+
+pub fn load_static_meshes<'a>(
+    data: &'a Document,
+    buffer_data: &Vec<Data>,
+) -> (Vec<ModelVertex>, Vec<u32>, Material<'a>) {
+    let mut vertices = vec![];
+    for mesh in data.meshes() {
+        for primitive in mesh.primitives() {
+            let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
+            let positions: Vec<[f32; 3]> = reader
+                .read_positions()
+                .expect("Failed to read positions")
+                .collect();
+            let tex_coords: Vec<[f32; 2]> = reader
+                .read_tex_coords(0)
+                .expect("Failed to read tex_coords")
+                .into_f32()
+                .collect();
+            let normals: Vec<[f32; 3]> = reader
+                .read_normals()
+                .expect("Failed to read normals")
+                .collect();
+            let indices: Vec<u32> = reader
+                .read_indices()
+                .expect("Failed to read indices")
+                .into_u32()
+                .collect();
+            assert_eq!(positions.len(), tex_coords.len());
+            assert_eq!(positions.len(), normals.len());
+
+            for i in 0..positions.len() {
+                vertices.push(ModelVertex {
+                    position: positions[i],
+                    tex_coords: tex_coords[i],
+                    normal: normals[i],
+                });
+            }
+            return (vertices, indices, primitive.material());
         }
     }
     panic!("GLTF didn't have any primitives");

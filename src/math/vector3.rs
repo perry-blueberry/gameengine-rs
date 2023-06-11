@@ -260,3 +260,13 @@ impl Default for Vector3 {
         Self::zero()
     }
 }
+
+impl From<glam::Vec3> for Vector3 {
+    fn from(value: glam::Vec3) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+            z: value.z,
+        }
+    }
+}

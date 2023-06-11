@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use gameengine_rs::{
     animation::{
         clip::Clip,
-        gltf_loader::{load_animation_clips, load_meshes, load_skeleton},
+        gltf_loader::{load_animation_clips, load_skeleton, load_skinned_meshes},
     },
     instance::Instance,
     math::{quaternion::Quaternion, vector3::Vector3},
@@ -19,7 +19,7 @@ pub fn main() {
     let mut state = pollster::block_on(State::new(window));
     let (document, buffers, _images) = gltf::import("res/Woman.gltf").expect("Failed to open gltf");
     let (vertices, original_positions, original_normals, indices, material) =
-        load_meshes(&document, &buffers);
+        load_skinned_meshes(&document, &buffers);
     let diffuse_texture =
         pollster::block_on(load_texture("Woman.png", &state.device, &state.queue))
             .expect("Failed to read diffuse texture");

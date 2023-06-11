@@ -1,13 +1,14 @@
-use std::sync::{Arc, RwLock};
-use std::{mem::size_of, ops::Range};
-
+use crate::instance::InstanceRaw;
+use crate::math::vector3::Vector3;
+use crate::{instance::Instance, rendering::renderable::RenderableT, texture};
 use anyhow::Ok;
 use anyhow::Result;
 use bytemuck::cast_slice;
 use bytemuck::{Pod, Zeroable};
+use std::sync::{Arc, RwLock};
+use std::{mem::size_of, ops::Range};
 use wgpu::util::BufferInitDescriptor;
 use wgpu::util::DeviceExt;
-use wgpu::ShaderModule;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, BufferAddress, BufferBindingType, BufferUsages, ColorWrites,
@@ -15,12 +16,7 @@ use wgpu::{
     Queue, RenderPass, RenderPipeline, ShaderStages, StencilState, SurfaceConfiguration,
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
-
-use crate::instance::create_instances;
-use crate::instance::InstanceRaw;
-use crate::math::vector3::Vector3;
-use crate::texture::create_texture_bind_group_layout;
-use crate::{instance::Instance, rendering::renderable::RenderableT, resources, texture};
+use wgpu::{BindGroupLayout, ShaderModule};
 
 use super::renderable::Vertex;
 
@@ -159,7 +155,9 @@ pub struct TriangleModel {
 }
 
 pub async fn new_model(
-    model_name: &str,
+    model: Model<ModelVertex>,
+    texture_bind_group_layout: BindGroupLayout,
+    instances: Vec<Instance>,
     device: &Device,
     queue: &Queue,
     config: &SurfaceConfiguration,
@@ -172,11 +170,6 @@ pub async fn new_model(
     Model<ModelVertex>,
     BindGroup,
 )> {
-    let texture_bind_group_layout = create_texture_bind_group_layout(&device);
-    let model = resources::load_model(model_name, &device, &queue, &texture_bind_group_layout)
-        .await
-        .unwrap();
-
     let camera_bind_group_layout = device.create_bind_group_layout(&BindGroupLayoutDescriptor {
         label: Some("camera_bind_group_layout"),
         entries: &[BindGroupLayoutEntry {
@@ -245,8 +238,6 @@ pub async fn new_model(
         multiview: None,
     });
 
-    let instances = create_instances();
-
     let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
     let instance_buffer = device.create_buffer_init(&BufferInitDescriptor {
         label: Some("instance_buffer"),
@@ -264,15 +255,26 @@ pub async fn new_model(
 
 impl TriangleModel {
     pub async fn new(
-        model_name: &str,
+        model: Model<ModelVertex>,
+        texture_bind_group_layout: BindGroupLayout,
+        instances: Vec<Instance>,
         device: &Device,
         queue: &Queue,
         config: &SurfaceConfiguration,
         camera_buffer: &wgpu::Buffer,
     ) -> Result<Self> {
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
-        let (render_pipeline, instances, instance_buffer, model, camera_bind_group) =
-            new_model(model_name, device, queue, config, camera_buffer, shader).await?;
+        let (render_pipeline, instances, instance_buffer, model, camera_bind_group) = new_model(
+            model,
+            texture_bind_group_layout,
+            instances,
+            device,
+            queue,
+            config,
+            camera_buffer,
+            shader,
+        )
+        .await?;
         Ok(Self {
             render_pipeline,
             instances,

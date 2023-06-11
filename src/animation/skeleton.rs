@@ -2,6 +2,7 @@ use glam::Mat4;
 
 use super::pose::Pose;
 
+#[derive(Clone)]
 pub struct Skeleton {
     pub rest_pose: Pose,
     pub bind_pose: Pose,

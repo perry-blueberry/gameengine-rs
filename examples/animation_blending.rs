@@ -2,8 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use gameengine_rs::{
     animation::{
-        clip::Clip,
-        gltf_loader::{load_animation_clips, load_meshes, load_skeleton},
+        gltf_loader::{load_animation_clips, load_skeleton, load_skinned_meshes},
         pose::Pose,
     },
     instance::Instance,
@@ -22,7 +21,7 @@ pub fn main() {
 
     let (document, buffers, _images) = gltf::import("res/Woman.gltf").expect("Failed to open gltf");
     let (vertices, original_positions, original_normals, indices, material) =
-        load_meshes(&document, &buffers);
+        load_skinned_meshes(&document, &buffers);
     let skeleton = Arc::new(load_skeleton(&document, &buffers));
 
     let (animation_clips, additive_index) = {
