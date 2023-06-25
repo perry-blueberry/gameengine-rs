@@ -45,8 +45,6 @@ impl CameraController {
             },
             Either::Right(e) => match e.event {
                 gilrs::EventType::AxisChanged(Axis::LeftStickX, v, _) if v.abs() < 0.05 => {
-                    println!("x is 0");
-                    dbg!(v);
                     self.x = 0.0;
                     true
                 }
@@ -55,8 +53,6 @@ impl CameraController {
                     true
                 }
                 gilrs::EventType::AxisChanged(Axis::LeftStickY, v, _) if v.abs() < 0.05 => {
-                    println!("y is 0");
-                    dbg!(v);
                     self.y = 0.0;
                     true
                 }
