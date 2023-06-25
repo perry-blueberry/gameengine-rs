@@ -1,17 +1,13 @@
-use gameengine_rs::{
-    animation::{frame::ScalarFrame, interpolation::Interpolation, track::ScalarTrack},
-    math::vector3::Vector3,
-    rendering::{
-        line::LineRender,
-        point::PointRender,
-        renderable::{Renderable, SimpleVertex},
-        state::State,
-    },
-};
-
-use winit::{event_loop::EventLoop, window::WindowBuilder};
-
+use animation::{frame::ScalarFrame, interpolation::Interpolation, track::ScalarTrack};
 use gameengine_rs::run;
+use gameengine_rs::state::State;
+use math::vector3::Vector3;
+use rendering::{
+    line::LineRender,
+    point::PointRender,
+    renderable::{Renderable, SimpleVertex},
+};
+use winit::{event_loop::EventLoop, window::WindowBuilder};
 
 pub fn main() {
     let event_loop = EventLoop::new();

@@ -2,7 +2,6 @@ pub mod array_type;
 pub mod clip;
 pub mod fabrik_solver;
 pub mod frame;
-pub mod gltf_loader;
 pub mod ik_leg;
 pub mod interpolation;
 pub mod pose;

@@ -4,7 +4,7 @@ use bytemuck::{Pod, Zeroable};
 use num_traits::Zero;
 use wgpu::{BufferAddress, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
 
-use crate::math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3};
+use math::{matrix4::Matrix4, quaternion::Quaternion, vector3::Vector3};
 
 pub struct Instance {
     pub position: Vector3,

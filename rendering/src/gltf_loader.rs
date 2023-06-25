@@ -6,12 +6,12 @@ use gltf::animation::util::ReadOutputs;
 use gltf::{animation::Channel, buffer::Data, Document};
 use gltf::{Material, Node, Skin};
 
-use crate::math::glam_transform::Transform;
-use crate::rendering::model::ModelVertex;
-use crate::rendering::skeletal_model::SkeletalVertex;
+use crate::model::ModelVertex;
+use crate::skeletal_model::SkeletalVertex;
+use math::glam_transform::Transform;
 
-use super::skeleton::Skeleton;
-use super::{clip::Clip, frame::Frame, interpolation::Interpolation, pose::Pose, track::Track};
+use animation::skeleton::Skeleton;
+use animation::{clip::Clip, frame::Frame, interpolation::Interpolation, pose::Pose, track::Track};
 
 pub fn load_skeleton(data: &Document, buffer_data: &Vec<Data>) -> Skeleton {
     Skeleton::new(

@@ -1,32 +1,26 @@
-use std::sync::{Arc, RwLock};
-
-use gameengine_rs::{
-    animation::{
-        clip::Clip,
-        frame::Frame,
-        gltf_loader::{
-            load_animation_clips, load_skeleton, load_skinned_meshes, load_static_meshes,
-        },
-        ik_leg::IkLeg,
-        interpolation::Interpolation,
-        track::{ScalarTrack, Vector3Track},
-    },
-    collisions::triangle_ray::mesh_to_triangles,
+use animation::{
+    clip::Clip,
+    frame::Frame,
+    ik_leg::IkLeg,
+    interpolation::Interpolation,
+    track::{ScalarTrack, Vector3Track},
+};
+use collisions::triangle_ray::{mesh_to_triangles, Vertex};
+use gameengine_rs::state::State;
+use gameengine_rs::{resources::load_texture, run};
+use glam::Vec3;
+use math::{quaternion::Quaternion, vector3::Vector3};
+use num_traits::Zero;
+use rendering::{
+    gltf_loader::{load_animation_clips, load_skeleton, load_skinned_meshes, load_static_meshes},
     instance::Instance,
-    math::{quaternion::Quaternion, vector3::Vector3},
-    rendering::{
-        model::{self, Material, Model},
-        render_players::ik_leg_player::IkLegPlayer,
-        renderable::Renderable,
-        skeletal_model::SkeletalModel,
-        state::State,
-    },
-    resources::load_texture,
-    run,
+    model::{self, Material, Model},
+    render_players::ik_leg_player::IkLegPlayer,
+    renderable::Renderable,
+    skeletal_model::SkeletalModel,
     texture::create_texture_bind_group_layout,
 };
-use glam::Vec3;
-use num_traits::Zero;
+use std::sync::{Arc, RwLock};
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroupDescriptor, BindGroupEntry, BindingResource, BufferUsages,
@@ -100,6 +94,12 @@ pub fn main() {
     ))
     .expect("Unable to create model");
     state.add_renderable(Renderable::Model(model));
+    let vertices: Vec<Vertex> = vertices
+        .iter()
+        .map(|v| Vertex {
+            position: v.position,
+        })
+        .collect();
     let triangles = mesh_to_triangles(&vertices, &indices);
 
     let (document, buffers, _images) = gltf::import("res/Woman.gltf").expect("Failed to open gltf");

@@ -3,10 +3,8 @@ use wgpu::{
     SurfaceConfiguration,
 };
 
-use crate::{
-    animation::{clip::Clip, pose::Pose},
-    texture,
-};
+use crate::texture;
+use animation::{clip::Clip, pose::Pose};
 
 use super::super::{
     line::LineRender,

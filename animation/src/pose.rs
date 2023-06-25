@@ -1,6 +1,6 @@
 use glam::Mat4;
 
-use crate::math::glam_transform::Transform;
+use math::glam_transform::Transform;
 
 use super::{clip::Clip, skeleton::Skeleton};
 

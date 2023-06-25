@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 
-use crate::math::{matrix4::Matrix4, vector3::Vector3};
+use math::{matrix4::Matrix4, vector3::Vector3};
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: Matrix4 = Matrix4{values: [

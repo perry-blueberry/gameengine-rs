@@ -1,9 +1,8 @@
-use gameengine_rs::{
-    instance::create_instances,
-    rendering::{model, renderable::Renderable, state::State},
-    resources, run,
-    texture::create_texture_bind_group_layout,
-};
+use gameengine_rs::state::State;
+use gameengine_rs::{resources, run};
+use rendering::instance::create_instances;
+use rendering::texture::create_texture_bind_group_layout;
+use rendering::{model, renderable::Renderable};
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 
 fn main() {

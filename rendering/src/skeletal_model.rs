@@ -1,12 +1,17 @@
+use crate::{
+    instance::{Instance, InstanceRaw},
+    texture::{self, create_texture_bind_group_layout},
+};
+use animation::{clip::Clip, pose::Pose, skeleton::Skeleton};
+use bytemuck::{Pod, Zeroable};
+use glam::Mat4;
+use gltf::Material;
+use math::{matrix4::Matrix4, vector3::Vector3};
+use num_traits::Zero;
 use std::{
     mem::size_of,
     sync::{Arc, RwLock},
 };
-
-use bytemuck::{Pod, Zeroable};
-use glam::Mat4;
-use gltf::Material;
-use num_traits::Zero;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
@@ -16,18 +21,10 @@ use wgpu::{
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 
-use crate::{
-    animation::{clip::Clip, pose::Pose, skeleton::Skeleton},
-    instance::{Instance, InstanceRaw},
-    math::{matrix4::Matrix4, vector3::Vector3},
-    texture::{self, create_texture_bind_group_layout},
-};
-
 use super::{
     model::{self, DrawModel, Mesh, Model},
     renderable::{RenderableT, Vertex},
 };
-
 use anyhow::{Ok, Result};
 
 #[repr(C)]

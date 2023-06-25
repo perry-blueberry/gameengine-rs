@@ -1,10 +1,11 @@
+use super::renderable::Vertex;
 use crate::instance::InstanceRaw;
-use crate::math::vector3::Vector3;
-use crate::{instance::Instance, rendering::renderable::RenderableT, texture};
+use crate::{instance::Instance, renderable::RenderableT, texture};
 use anyhow::Ok;
 use anyhow::Result;
 use bytemuck::cast_slice;
 use bytemuck::{Pod, Zeroable};
+use math::vector3::Vector3;
 use std::sync::{Arc, RwLock};
 use std::{mem::size_of, ops::Range};
 use wgpu::util::BufferInitDescriptor;
@@ -17,8 +18,6 @@ use wgpu::{
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use wgpu::{BindGroupLayout, ShaderModule};
-
-use super::renderable::Vertex;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]

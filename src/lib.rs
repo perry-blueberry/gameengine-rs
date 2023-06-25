@@ -1,22 +1,17 @@
 use std::time::{Duration, Instant};
 
+use crate::state::State;
 use either::Either::{Left, Right};
 use gilrs::Gilrs;
-use rendering::state::State;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
 };
 
-pub mod animation;
 pub mod camera;
 mod camera_controller;
-pub mod collisions;
-pub mod instance;
-pub mod math;
-pub mod rendering;
 pub mod resources;
-pub mod texture;
+pub mod state;
 
 fn get_delta(
     previous_time: &mut Instant,

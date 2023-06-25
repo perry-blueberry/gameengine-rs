@@ -1,0 +1,11 @@
+[package]
+name = "collisions"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate_type = ["dylib"]
+
+[dependencies]
+glam = { workspace = true }
+math = { path = "../math" }

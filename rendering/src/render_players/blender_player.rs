@@ -1,15 +1,14 @@
-use std::sync::{Arc, RwLock};
-
 use crate::{
-    animation::{clip::Clip, pose::Pose, skeleton::Skeleton},
     instance::Instance,
-    rendering::{
+    texture,
+    {
         model::{DrawModel, Model},
         renderable::RenderableT,
         skeletal_model::{new_skeletal_pipeline, SkeletalModelBase, SkeletalVertex},
     },
-    texture,
 };
+use animation::{clip::Clip, pose::Pose, skeleton::Skeleton};
+use std::sync::{Arc, RwLock};
 
 use anyhow::{Ok, Result};
 use gltf::Material;

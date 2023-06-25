@@ -1,19 +1,16 @@
 use std::sync::{Arc, RwLock};
 
-use gameengine_rs::{
-    animation::{
-        gltf_loader::{load_animation_clips, load_skeleton, load_skinned_meshes},
-        pose::Pose,
-    },
+use animation::pose::Pose;
+use gameengine_rs::resources::load_texture;
+use gameengine_rs::run;
+use gameengine_rs::state::State;
+use math::{quaternion::Quaternion, vector3::Vector3};
+use rendering::{
+    gltf_loader::{load_animation_clips, load_skeleton, load_skinned_meshes},
     instance::Instance,
-    math::{quaternion::Quaternion, vector3::Vector3},
-    rendering::{
-        render_players::blender_player::BlenderPlayer, renderable::Renderable, state::State,
-    },
-    resources::load_texture,
-    run,
+    render_players::blender_player::BlenderPlayer,
+    renderable::Renderable,
 };
-
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 pub fn main() {
     let event_loop = EventLoop::new();

@@ -1,5 +1,5 @@
-use crate::math::quaternion::Quaternion;
-use crate::math::vector3::Vector3;
+use math::quaternion::Quaternion;
+use math::vector3::Vector3;
 
 use super::array_type::ArrayType;
 

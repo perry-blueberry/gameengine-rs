@@ -1,12 +1,10 @@
 use crate::{
-    animation::{fabrik_solver::FabrikSolver, transform_track::TransformTrack},
-    math::glam_transform::Transform,
-    rendering::{
-        line::LineRender,
-        point::PointRender,
-        renderable::{RenderableT, SimpleVertex},
-    },
+    line::LineRender,
+    point::PointRender,
+    renderable::{RenderableT, SimpleVertex},
 };
+use animation::{fabrik_solver::FabrikSolver, transform_track::TransformTrack};
+use math::glam_transform::Transform;
 
 pub struct IkPlayer {
     solver: FabrikSolver,

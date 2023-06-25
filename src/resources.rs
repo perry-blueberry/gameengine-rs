@@ -14,11 +14,9 @@ use wgpu::{
     Queue,
 };
 
-use crate::{
-    math::vector3::Vector3,
-    rendering::model::{self, ModelVertex},
-    texture,
-};
+use math::vector3::Vector3;
+use rendering::model::{self, ModelVertex};
+use rendering::texture;
 
 fn get_path(file_name: &str) -> PathBuf {
     Path::new(env!("OUT_DIR")).join("res").join(file_name)

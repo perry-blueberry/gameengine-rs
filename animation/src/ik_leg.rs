@@ -1,8 +1,6 @@
-use crate::{
-    animation::{fabrik_solver::FabrikSolver, pose::Pose, skeleton::Skeleton, track::ScalarTrack},
-    math::glam_transform::Transform,
-};
+use crate::{fabrik_solver::FabrikSolver, pose::Pose, skeleton::Skeleton, track::ScalarTrack};
 use glam::{Quat, Vec3};
+use math::glam_transform::Transform;
 
 pub struct IkLeg {
     pub pin_track: ScalarTrack,

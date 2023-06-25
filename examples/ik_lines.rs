@@ -1,20 +1,16 @@
-use gameengine_rs::{
-    animation::{fabrik_solver::FabrikSolver, frame::Frame, transform_track::TransformTrack},
-    camera::CameraPerspective,
-    math::{glam_transform::Transform, vector3::Vector3},
-    rendering::{
-        line::LineRender,
-        point::PointRender,
-        render_players::ik_player::IkPlayer,
-        renderable::{Renderable, SimpleVertex},
-        state::State,
-    },
-};
-
-use glam::{Quat, Vec3};
-use winit::{event_loop::EventLoop, window::WindowBuilder};
-
+use animation::{fabrik_solver::FabrikSolver, frame::Frame, transform_track::TransformTrack};
+use gameengine_rs::camera::CameraPerspective;
 use gameengine_rs::run;
+use gameengine_rs::state::State;
+use glam::{Quat, Vec3};
+use math::{glam_transform::Transform, vector3::Vector3};
+use rendering::{
+    line::LineRender,
+    point::PointRender,
+    render_players::ik_player::IkPlayer,
+    renderable::{Renderable, SimpleVertex},
+};
+use winit::{event_loop::EventLoop, window::WindowBuilder};
 
 pub fn main() {
     let event_loop = EventLoop::new();

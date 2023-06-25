@@ -2,7 +2,7 @@ use std::ops::Neg;
 
 use glam::{Quat, Vec3};
 
-use crate::math::{quaternion::Quaternion, vector3::Vector3};
+use math::{quaternion::Quaternion, vector3::Vector3};
 
 pub trait Neighborhood {
     fn neighborhood(&self, other: &mut Self);

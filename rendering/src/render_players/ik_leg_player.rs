@@ -1,11 +1,11 @@
 use crate::{
-    animation::{clip::Clip, ik_leg::IkLeg, pose::Pose, skeleton::Skeleton, track::Vector3Track},
-    collisions::triangle_ray::{Ray, Triangle},
     instance::Instance,
-    math::glam_transform::{FromTo, LookRotation, Transform},
-    rendering::{renderable::RenderableT, skeletal_model::SkeletalModel},
+    {renderable::RenderableT, skeletal_model::SkeletalModel},
 };
+use animation::{clip::Clip, ik_leg::IkLeg, pose::Pose, skeleton::Skeleton, track::Vector3Track};
+use collisions::triangle_ray::{Ray, Triangle};
 use glam::{Quat, Vec3};
+use math::glam_transform::{FromTo, LookRotation, Transform};
 
 pub struct IkLegPlayer {
     walking_time: f32,

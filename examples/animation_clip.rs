@@ -1,15 +1,12 @@
-use gameengine_rs::{
-    animation::{
-        clip::Clip,
-        gltf_loader::{load_animation_clips, load_rest_pose},
-    },
-    rendering::{
-        line::LineRender,
-        render_players::animation_clip_player::{from_pose, AnimationClipPlayer},
-        renderable::Renderable,
-        state::State,
-    },
-    run, texture,
+use animation::clip::Clip;
+use gameengine_rs::run;
+use gameengine_rs::state::State;
+use rendering::{
+    gltf_loader::{load_animation_clips, load_rest_pose},
+    line::LineRender,
+    render_players::animation_clip_player::{from_pose, AnimationClipPlayer},
+    renderable::Renderable,
+    texture,
 };
 use wgpu::{CompareFunction, DepthBiasState, DepthStencilState, StencilState};
 use winit::{event_loop::EventLoop, window::WindowBuilder};

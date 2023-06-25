@@ -3,10 +3,10 @@ use std::iter;
 use crate::camera::{CameraOrtho, CameraPerspective, CameraUniform};
 use crate::camera_controller::CameraController;
 
-use crate::math::vector3::Vector3;
-use crate::texture;
 use bytemuck::cast_slice;
 use either::Either;
+use math::vector3::Vector3;
+use rendering::texture;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BufferUsages, LoadOp, Operations, RenderPassDepthStencilAttachment,
@@ -17,7 +17,7 @@ use winit::event::*;
 
 use winit::window::Window;
 
-use super::renderable::{Renderable, RenderableT};
+use rendering::renderable::{Renderable, RenderableT};
 
 pub struct State {
     pub surface: Surface,

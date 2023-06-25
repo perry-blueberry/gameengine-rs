@@ -1,7 +1,5 @@
-use crate::{
-    math::vector3::Vector3,
-    rendering::model::{self, ModelVertex},
-};
+use crate::triangle_ray::Vertex;
+use math::vector3::Vector3;
 
 pub struct AABB {
     min: Vector3,
@@ -9,7 +7,7 @@ pub struct AABB {
 }
 
 impl AABB {
-    pub fn new(mesh: &model::Mesh<ModelVertex>) -> Self {
+    pub fn new(mesh: &[Vertex]) -> Self {
         let mut min = Vector3 {
             x: f32::INFINITY,
             y: f32::INFINITY,
@@ -20,12 +18,7 @@ impl AABB {
             y: f32::NEG_INFINITY,
             z: f32::NEG_INFINITY,
         };
-        for &model::ModelVertex {
-            position,
-            tex_coords: _,
-            normal: _,
-        } in &mesh.model_vertices
-        {
+        for &Vertex { position } in mesh {
             min.x = min.x.min(position[0]);
             min.y = min.y.min(position[1]);
             min.z = min.z.min(position[2]);

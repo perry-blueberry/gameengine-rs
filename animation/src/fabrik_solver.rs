@@ -1,6 +1,6 @@
 use glam::{Quat, Vec3};
 
-use crate::math::{glam_transform::FromTo, glam_transform::Transform};
+use math::{glam_transform::FromTo, glam_transform::Transform};
 
 #[derive(Debug)]
 pub struct FabrikSolver {

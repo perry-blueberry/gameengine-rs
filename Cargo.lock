@@ -59,6 +59,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "animation"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "gltf",
+ "math",
+ "num-traits",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -123,12 +134,6 @@ name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
-
-[[package]]
-name = "base64"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
 
 [[package]]
 name = "bit-set"
@@ -269,6 +274,14 @@ checksum = "3538270d33cc669650c4b093848450d380def10c331d38c768e34cac80576e6e"
 dependencies = [
  "termcolor",
  "unicode-width",
+]
+
+[[package]]
+name = "collisions"
+version = "0.1.0"
+dependencies = [
+ "glam",
+ "math",
 ]
 
 [[package]]
@@ -716,9 +729,10 @@ dependencies = [
 name = "gameengine-rs"
 version = "0.1.0"
 dependencies = [
+ "animation",
  "anyhow",
- "base64 0.21.0",
  "bytemuck",
+ "collisions",
  "either",
  "env_logger",
  "fs_extra",
@@ -726,11 +740,11 @@ dependencies = [
  "glam",
  "glob",
  "gltf",
- "image",
  "log",
+ "math",
  "num-traits",
- "percent-encoding",
  "pollster",
+ "rendering",
  "tobj",
  "wgpu",
  "winit",
@@ -830,7 +844,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd7703af6975def3b32573c60aaa5ebfebfab5d879da1e1315d87155ba57bcd"
 dependencies = [
- "base64 0.13.1",
+ "base64",
  "byteorder",
  "gltf-json",
  "image",
@@ -1179,6 +1193,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "math"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "glam",
+ "num-traits",
 ]
 
 [[package]]
@@ -1668,6 +1691,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1382d1f0a252c4bf97dc20d979a2fdd05b024acd7c2ed0f7595d7817666a157"
 
 [[package]]
+name = "rendering"
+version = "0.1.0"
+dependencies = [
+ "animation",
+ "anyhow",
+ "bytemuck",
+ "collisions",
+ "either",
+ "env_logger",
+ "glam",
+ "gltf",
+ "image",
+ "log",
+ "math",
+ "num-traits",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2048,9 +2091,9 @@ dependencies = [
 
 [[package]]
 name = "tobj"
-version = "3.2.4"
+version = "3.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d0bde887a49e2e09f30ba3b454cdba3fbc971703e436c527f9f69a035b45b9b"
+checksum = "57381207291289bad19de63acd3fbf5948ff99b2868116c367b7224c37d55f90"
 dependencies = [
  "ahash 0.8.3",
 ]

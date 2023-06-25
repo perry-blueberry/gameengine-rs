@@ -1,9 +1,12 @@
-use crate::rendering::model::ModelVertex;
 use glam::Vec3;
 
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
+}
+
+pub struct Vertex {
+    pub position: [f32; 3],
 }
 
 impl Ray {
@@ -62,7 +65,7 @@ impl Triangle {
     }
 }
 
-pub fn mesh_to_triangles(vertices: &[ModelVertex], indices: &[u32]) -> Vec<Triangle> {
+pub fn mesh_to_triangles(vertices: &[Vertex], indices: &[u32]) -> Vec<Triangle> {
     let mut result = Vec::with_capacity(indices.len() / 3);
     for i in (0..indices.len()).step_by(3) {
         result.push(Triangle::new(
