@@ -20,6 +20,8 @@ percent-encoding = "2.2"
 base64 = "0.21"
 num-traits = "0.2"
 glam = {version = "0.24", features = ["bytemuck"] }
+gilrs = "0.8"
+either = "1.8"
 
 [build-dependencies]
 anyhow = "1.0"

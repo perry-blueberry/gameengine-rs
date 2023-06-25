@@ -6,6 +6,7 @@ use crate::camera_controller::CameraController;
 use crate::math::vector3::Vector3;
 use crate::texture;
 use bytemuck::cast_slice;
+use either::Either;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
     BufferUsages, LoadOp, Operations, RenderPassDepthStencilAttachment,
@@ -186,7 +187,7 @@ impl State {
             texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
     }
 
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
+    pub fn input(&mut self, event: Either<&WindowEvent, gilrs::Event>) -> bool {
         self.camera_persp_controller.process_events(event)
     }
 

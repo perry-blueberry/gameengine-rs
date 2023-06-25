@@ -1,5 +1,7 @@
 use std::time::{Duration, Instant};
 
+use either::Either::{Left, Right};
+use gilrs::Gilrs;
 use rendering::state::State;
 use winit::{
     event::*,
@@ -41,6 +43,8 @@ fn get_delta(
 pub fn run(event_loop: EventLoop<()>, mut state: State) {
     env_logger::init();
 
+    let mut gilrs = Gilrs::new().unwrap();
+
     let mut previous_time = Instant::now();
     let mut frame_counter = 0;
     let mut delta_accum = Duration::ZERO;
@@ -50,7 +54,7 @@ pub fn run(event_loop: EventLoop<()>, mut state: State) {
                 ref event,
                 window_id,
             } if window_id == state.window().id() => {
-                if !state.input(event) {
+                if !state.input(Left(event)) {
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
@@ -94,6 +98,9 @@ pub fn run(event_loop: EventLoop<()>, mut state: State) {
                 state.window().request_redraw();
             }
             _ => {}
+        }
+        while let Some(ev) = gilrs.next_event() {
+            state.input(Right(ev));
         }
     });
 }
